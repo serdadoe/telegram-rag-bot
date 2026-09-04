@@ -1,0 +1,1180 @@
+{
+  "name": "Telegram RAG Bot — New Member Captcha / Verification",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "channel_post",
+          "edited_channel_post",
+          "message",
+          "callback_query"
+        ],
+        "additionalFields": {
+          "download": false
+        }
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -3248,
+        112
+      ],
+      "id": "a872622d-4901-4c2e-b7f2-996f8af28ac5",
+      "name": "Telegram Trigger",
+      "webhookId": "c61b2952-cdbf-4dfe-bf77-0b478732a6f1",
+      "credentials": {
+        "telegramApi": {
+          "id": "Gzt8GYCdmJAP19cR",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "402f00d4-c9d9-4c02-8fa5-c7a91d3fbfce",
+              "leftValue": "={{ $json.message?.new_chat_members?.length > 0 }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "38e707aa-4ceb-4613-81d0-c0e165663fc6",
+      "name": "Is New Member Event",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -2224,
+        1264
+      ]
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "message.new_chat_members",
+        "options": {}
+      },
+      "id": "874a0637-5339-4cbd-a7cb-63f6ab99a106",
+      "name": "Split New Members",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        -1984,
+        1200
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const options = [2,3,4,5,6,7,8,9].sort(() => Math.random() - 0.5).slice(0, 4);\nconst correctIndex = Math.floor(Math.random() * 4);\nconst chatId = $('Telegram Trigger').item.json.message.chat.id;\nconst userId = $json.id;\nconst firstName = $json.first_name || 'there';\nconst escapeHtml = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');\nconst mention = `<b><a href=\"tg://user?id=${userId}\">@${escapeHtml(firstName)}</a></b>`;\n\nconst keyboard = {\n  inline_keyboard: [ options.map((n, i) => ({ text: String(n), callback_data: `v:${userId}:${i}` })) ]\n};\n\nreturn {\n  json: {\n    chatId,\n    userId,\n    firstName,\n    correctIndex,\n    keyboard,\n    promptText: `Welcome ${mention}! Tap <b>${options[correctIndex]}</b> within 5 minutes to unlock the group. You have 3 attempts.`\n  }\n};"
+      },
+      "id": "b18dd183-5d5b-4da1-af2d-2f261022001b",
+      "name": "Build Challenge",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1808,
+        1200
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.telegram.org/bot{{ $env.TELEGRAM_BOT_TOKEN }}/restrictChatMember",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  chat_id: $json.chatId,\n  user_id: $json.userId,\n  permissions: {\n    can_send_messages: false,\n    can_send_photos: false,\n    can_send_videos: false,\n    can_send_other_messages: false,\n    can_add_web_page_previews: false,\n    can_invite_users: false\n  }\n}) }}",
+        "options": {}
+      },
+      "id": "097d0fa9-9e65-43df-b9dd-9f1f73f624e0",
+      "name": "Restrict New Member",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1632,
+        1200
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.telegram.org/bot{{ $env.TELEGRAM_BOT_TOKEN }}/sendMessage",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  chat_id: $('Build Challenge').item.json.chatId,\n  message_thread_id: 'VERIFICATION_THREAD_ID',\n  text: $('Build Challenge').item.json.promptText,\n  parse_mode: 'HTML',\n  reply_markup: $('Build Challenge').item.json.keyboard\n}) }}",
+        "options": {}
+      },
+      "id": "88fccad0-b7c2-439f-bbff-0bfbff68ea68",
+      "name": "Send Challenge",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1408,
+        1200
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const sendResult = $json.result;\nconst build = $('Build Challenge').item.json;\nconst deadline = new Date(Date.now() + 5 * 60 * 1000).toISOString();\n\nreturn {\n  json: {\n    chatId: build.chatId,\n    userId: build.userId,\n    messageId: sendResult.message_id,\n    correctIndex: build.correctIndex,\n    deadline\n  }\n};"
+      },
+      "id": "03de26ef-f0f0-4520-bf82-fc33679d2b61",
+      "name": "Prepare DB Row",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1232,
+        1200
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO pending_verifications (chat_id, user_id, message_id, correct_index, deadline)\nVALUES ({{ $json.chatId }}, {{ $json.userId }}, {{ $json.messageId }}, {{ $json.correctIndex }}, '{{ $json.deadline }}')\nON CONFLICT (chat_id, user_id) DO UPDATE SET\n  message_id = EXCLUDED.message_id,\n  correct_index = EXCLUDED.correct_index,\n  attempts = 0,\n  deadline = EXCLUDED.deadline;",
+        "options": {}
+      },
+      "id": "dc865e72-4b09-409c-9656-95d618ba781e",
+      "name": "Insert Pending Verification",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        -1072,
+        1200
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "6WUwV5V3NE7UTeBm",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c0f75fac-7ff0-47a0-95b7-31cebd65d7ca",
+              "leftValue": "={{ $json.callback_query?.data?.startsWith('v:') }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "3939c9b0-736f-448a-9a56-2b66ba81856b",
+      "name": "Is Verify Callback",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -2000,
+        1424
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "cefb97a5-e86a-4a7e-8816-70e2416c6640",
+      "name": "Ignore Other Updates",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        -1808,
+        1568
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const cq = $json.callback_query;\nconst parts = (cq.data || '').split(':');\n\nreturn {\n  json: {\n    chatId: cq.message.chat.id,\n    messageId: cq.message.message_id,\n    callbackQueryId: cq.id,\n    clickerId: cq.from.id,\n    targetFirstName: cq.from.first_name || 'Member',\n    targetUserId: Number(parts[1]),\n    choiceIndex: Number(parts[2])\n  }\n};"
+      },
+      "id": "f73aee0c-6d69-4ab5-b217-c12a0a53425b",
+      "name": "Parse Callback",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1808,
+        1408
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "69bedf3f-5377-4233-a1ce-86964f315447",
+              "leftValue": "={{ $json.clickerId }}",
+              "rightValue": "={{ $json.targetUserId }}",
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "4db2a91f-672b-4e31-83d8-77d54e613776",
+      "name": "Is Own Verification",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -1632,
+        1408
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.telegram.org/bot{{ $env.TELEGRAM_BOT_TOKEN }}/answerCallbackQuery",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  callback_query_id: $json.callbackQueryId,\n  text: \"This isn't your verification\",\n  show_alert: true\n}) }}",
+        "options": {}
+      },
+      "id": "572810e6-73ce-450a-badb-065c6a7100d3",
+      "name": "Answer Not Yours",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1408,
+        1568
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT to_jsonb(pv) AS row, (pv.id IS NOT NULL) AS found\nFROM (SELECT 1) d\nLEFT JOIN pending_verifications pv\n  ON pv.chat_id = {{ $json.chatId }} AND pv.user_id = {{ $json.targetUserId }};",
+        "options": {}
+      },
+      "id": "79ceb5b2-a5af-4f18-958a-7d79ad1ff6e3",
+      "name": "Get Pending Row",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        -1408,
+        1392
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "6WUwV5V3NE7UTeBm",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const cb = $('Parse Callback').item.json;\nconst row = $json.row;\n\nreturn {\n  json: {\n    ...cb,\n    found: $json.found,\n    dbMessageId: row ? row.message_id : null,\n    correctIndex: row ? row.correct_index : null,\n    attempts: row ? row.attempts : null\n  }\n};"
+      },
+      "id": "6acc7622-0530-4dbb-8681-862264c63685",
+      "name": "Merge Callback And Row",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1216,
+        1392
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 1
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "4fe1ddd9-fc11-4fe3-b2d8-71f8ee238fe9",
+              "leftValue": "={{ $json.found }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "52682280-94ba-4e05-9cfd-83d63ff04ed2",
+      "name": "Row Found",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -1040,
+        1392
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.telegram.org/bot{{ $env.TELEGRAM_BOT_TOKEN }}/answerCallbackQuery",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  callback_query_id: $json.callbackQueryId,\n  text: 'This challenge is no longer active',\n  show_alert: true\n}) }}",
+        "options": {}
+      },
+      "id": "1580f653-a551-4356-ade2-b9328846aaf3",
+      "name": "Answer Expired",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -832,
+        1488
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 1
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "405c576e-d9b0-450c-b6dd-9522062ada51",
+              "leftValue": "={{ $json.choiceIndex }}",
+              "rightValue": "={{ $json.correctIndex }}",
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "517a6841-f763-4209-9e65-35984d89d78f",
+      "name": "Is Correct",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -832,
+        1312
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.telegram.org/bot{{ $env.TELEGRAM_BOT_TOKEN }}/restrictChatMember",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  chat_id: $json.chatId,\n  user_id: $json.targetUserId,\n  permissions: {\n    can_send_messages: true,\n    can_send_photos: true,\n    can_send_videos: true,\n    can_send_other_messages: true,\n    can_add_web_page_previews: true,\n    can_invite_users: true\n  }\n}) }}",
+        "options": {}
+      },
+      "id": "902cd1f2-cc34-4fe7-9096-8b08f9626fca",
+      "name": "Unrestrict Member",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -592,
+        1168
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.telegram.org/bot{{ $env.TELEGRAM_BOT_TOKEN }}/answerCallbackQuery",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  callback_query_id: $('Merge Callback And Row').item.json.callbackQueryId,\n  text: 'Verified! Welcome.'\n}) }}",
+        "options": {}
+      },
+      "id": "675a5b6a-2d64-4a3a-89ec-a58807d4a99d",
+      "name": "Answer Verified",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -384,
+        1168
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.telegram.org/bot{{ $env.TELEGRAM_BOT_TOKEN }}/deleteMessage",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ chat_id: $('Merge Callback And Row').item.json.chatId, message_id: $('Merge Callback And Row').item.json.dbMessageId }) }}",
+        "options": {}
+      },
+      "id": "54021acc-caa2-4c9c-ac69-62c2c8e2af2b",
+      "name": "Delete Challenge Verified",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -192,
+        1168
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "DELETE FROM pending_verifications WHERE chat_id = {{ $('Merge Callback And Row').item.json.chatId }} AND user_id = {{ $('Merge Callback And Row').item.json.targetUserId }};",
+        "options": {}
+      },
+      "id": "15352e10-fd1d-422a-8c5f-c70b5e551f72",
+      "name": "Delete Pending Row Verified",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        0,
+        1168
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "6WUwV5V3NE7UTeBm",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "YOUR_GROUP_CHAT_ID",
+        "text": "=Welcome onboard, <b><a href=\"tg://user?id={{ $('Merge Callback And Row').item.json.targetUserId }}\">@{{ ($('Merge Callback And Row').item.json.targetFirstName || 'Member').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') }}</a></b>! 👋✨\n\nGrup ini tempat <i>freelancer</i> saling support. Bebas <i>sharing</i> info <a href=\"https://t.me/c/YOUR_GROUP_ID/JOB_OPENING_THREAD_ID\"><b>🔎 Job Opening</b></a>, diskusi <a href=\"https://t.me/c/YOUR_GROUP_ID/ONGOING_PROJECT_THREAD_ID\"><b>💼 Ongoing Project</b></a>, <a href=\"https://t.me/c/YOUR_GROUP_ID/VERIFIED_PAYOUT_THREAD_ID\"><b>💸 Verified Payout</b></a>, sampai info <a href=\"https://t.me/c/YOUR_GROUP_ID/SCAMMER_THREAD_ID\"><b>⚠️ Scammer</b></a>. \n\nUntuk diskusi yang spesifik silakan bisa masuk ke channel sesuai platform: \n<a href=\"https://t.me/c/YOUR_GROUP_ID/CROWDGEN_THREAD_ID\">Crowdgen</a> | <a href=\"https://t.me/c/YOUR_GROUP_ID/OUTLIER_THREAD_ID\">Outlier</a> | <a href=\"https://t.me/c/YOUR_GROUP_ID/MERCOR_THREAD_ID\">Mercor</a> | <a href=\"https://t.me/c/YOUR_GROUP_ID/DATAANNOTATION_THREAD_ID\">DataAnnotation</a> | <a href=\"https://t.me/c/YOUR_GROUP_ID/TMAXXX_THREAD_ID\">T-Maxxx</a> | <a href=\"https://t.me/c/YOUR_GROUP_ID/BABEL_AUDIO_THREAD_ID\">Babel Audio</a> | <a href=\"https://t.me/c/YOUR_GROUP_ID/RWS_THREAD_ID\">RWS</a> | <a href=\"https://t.me/c/YOUR_GROUP_ID/WELO_THREAD_ID\">Welo</a> | <a href=\"https://t.me/c/YOUR_GROUP_ID/TELUS_THREAD_ID\">Telus</a> | <a href=\"https://t.me/c/YOUR_GROUP_ID/ONEFORMA_THREAD_ID\">OneForma</a> | <a href=\"https://t.me/c/YOUR_GROUP_ID/TMAXXX_THREAD_ID\">Pair Recording</a> | <a href=\"https://t.me/c/YOUR_GROUP_ID/INVISIBLE_THREAD_ID\">Invisible</a> | <a href=\"https://t.me/c/YOUR_GROUP_ID/IMERIT_THREAD_ID\">iMerit</a> | <a href=\"https://t.me/c/YOUR_GROUP_ID/PROLIFIC_THREAD_ID\">Prolific</a> \n\nAda juga <a href=\"https://t.me/c/YOUR_GROUP_ID/ENGLISH_CLASS_THREAD_ID\"><b>🗣 English Class</b></a>, <a href=\"https://t.me/c/YOUR_GROUP_ID/CODING_CLASS_THREAD_ID\"><b>👩‍💻 Coding</b></a>, <a href=\"https://t.me/c/YOUR_GROUP_ID/TIPS_TRICKS_THREAD_ID\"><b>💻 Tips & Tricks</b></a>, dan <a href=\"https://t.me/c/YOUR_GROUP_ID/INCOGNITO_THREAD_ID\"><b>👀 Incognito</b></a> buat curhat/konsultasi bebas (termasuk 21+). \n\n🤖 Ada bot MasCuan yang siap bantu, tinggal ketik <code>/help</code> buat lihat <i>command</i> yang tersedia. Selamat cari cuan, semoga project impian segera datang! 🎉",
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "HTML"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        176,
+        1168
+      ],
+      "id": "fdb8fb5c-6bb3-4dcb-a219-230897063318",
+      "name": "Send Welcome",
+      "webhookId": "300086a4-6145-49db-84fa-4972d2aafb54",
+      "credentials": {
+        "telegramApi": {
+          "id": "Gzt8GYCdmJAP19cR",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE pending_verifications SET attempts = attempts + 1\nWHERE chat_id = {{ $json.chatId }} AND user_id = {{ $json.targetUserId }}\nRETURNING attempts, message_id;",
+        "options": {}
+      },
+      "id": "2fcc8666-8659-487f-a8b9-de0e287a467a",
+      "name": "Increment Attempts",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        -592,
+        1424
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "6WUwV5V3NE7UTeBm",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 1
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "f128110d-4da4-4e25-9f8e-806cce951683",
+              "leftValue": "={{ $json.attempts }}",
+              "rightValue": 3,
+              "operator": {
+                "type": "number",
+                "operation": "lt"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "c54fcc06-a6b5-43af-ae98-a467cb517e48",
+      "name": "Under Limit",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -384,
+        1424
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const options = [2,3,4,5,6,7,8,9].sort(() => Math.random() - 0.5).slice(0, 4);\nconst correctIndex = Math.floor(Math.random() * 4);\nconst cb = $('Merge Callback And Row').item.json;\nconst attempts = $json.attempts;\nconst keyboard = {\n  inline_keyboard: [ options.map((n, i) => ({ text: String(n), callback_data: `v:${cb.targetUserId}:${i}` })) ]\n};\n\nreturn {\n  json: {\n    chatId: cb.chatId,\n    targetUserId: cb.targetUserId,\n    messageId: $json.message_id,\n    callbackQueryId: cb.callbackQueryId,\n    correctIndex,\n    keyboard,\n    remaining: 3 - attempts,\n    promptText: `Wrong answer. Tap *${options[correctIndex]}* — ${3 - attempts} attempt(s) left.`\n  }\n};"
+      },
+      "id": "e5e6392d-f17d-463a-8ea7-5b2ee63585ad",
+      "name": "Build New Challenge",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -160,
+        1360
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.telegram.org/bot{{ $env.TELEGRAM_BOT_TOKEN }}/editMessageText",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  chat_id: $json.chatId,\n  message_id: $json.messageId,\n  text: $json.promptText,\n  parse_mode: 'Markdown',\n  reply_markup: $json.keyboard\n}) }}",
+        "options": {}
+      },
+      "id": "2014188c-e390-496e-ba74-e84cd7935284",
+      "name": "Edit Challenge Message",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        64,
+        1360
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE pending_verifications SET correct_index = {{ $('Build New Challenge').item.json.correctIndex }} WHERE chat_id = {{ $('Build New Challenge').item.json.chatId }} AND user_id = {{ $('Build New Challenge').item.json.targetUserId }};",
+        "options": {}
+      },
+      "id": "d3bfb1d6-fb12-4581-90a4-f91dc17d5c99",
+      "name": "Update Correct Index",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        272,
+        1360
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "6WUwV5V3NE7UTeBm",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.telegram.org/bot{{ $env.TELEGRAM_BOT_TOKEN }}/answerCallbackQuery",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  callback_query_id: $json.callbackQueryId,\n  text: `Wrong — ${$json.remaining} attempt(s) left`,\n  show_alert: true\n}) }}",
+        "options": {}
+      },
+      "id": "98107fd1-b6ce-4d3d-8485-236769d964a4",
+      "name": "Answer Wrong Try Again",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        512,
+        1360
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.telegram.org/bot{{ $env.TELEGRAM_BOT_TOKEN }}/banChatMember",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ chat_id: $('Merge Callback And Row').item.json.chatId, user_id: $('Merge Callback And Row').item.json.targetUserId, until_date: Math.floor(Date.now()/1000) + 300 }) }}",
+        "options": {}
+      },
+      "id": "119c3bca-7cfe-40b0-b392-f394e5950b51",
+      "name": "Ban Member Strikeout",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -160,
+        1536
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.telegram.org/bot{{ $env.TELEGRAM_BOT_TOKEN }}/deleteMessage",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ chat_id: $('Merge Callback And Row').item.json.chatId, message_id: $('Merge Callback And Row').item.json.dbMessageId }) }}",
+        "options": {}
+      },
+      "id": "94068190-b6ff-4312-a82b-d86fcafa5f70",
+      "name": "Delete Challenge Strikeout",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        272,
+        1536
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "DELETE FROM pending_verifications WHERE chat_id = {{ $('Merge Callback And Row').item.json.chatId }} AND user_id = {{ $('Merge Callback And Row').item.json.targetUserId }};",
+        "options": {}
+      },
+      "id": "098ff391-6572-481d-84c0-29ec75d9ecc9",
+      "name": "Delete Pending Row Strikeout",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        512,
+        1536
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "6WUwV5V3NE7UTeBm",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.telegram.org/bot{{ $env.TELEGRAM_BOT_TOKEN }}/answerCallbackQuery",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  callback_query_id: $json.callbackQueryId,\n  text: 'Too many failed attempts — removed from group',\n  show_alert: true\n}) }}",
+        "options": {}
+      },
+      "id": "73e67010-03b5-4bf4-a219-876fecadeb03",
+      "name": "Answer Too Many Attempts",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        720,
+        1536
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 1
+            }
+          ]
+        }
+      },
+      "id": "171d3b02-89a5-4fe6-ae74-0eac81e2b6e2",
+      "name": "Every Minute",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -2720,
+        -480
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT chat_id, user_id, message_id FROM pending_verifications WHERE deadline < now();",
+        "options": {}
+      },
+      "id": "4d3a79ad-03c4-4930-a04c-986598022d06",
+      "name": "Get Timed Out Rows",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        -2560,
+        -480
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "6WUwV5V3NE7UTeBm",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.telegram.org/bot{{ $env.TELEGRAM_BOT_TOKEN }}/banChatMember",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ chat_id: $json.chat_id, user_id: $json.user_id, until_date: Math.floor(Date.now()/1000) + 300 }) }}",
+        "options": {}
+      },
+      "id": "b764cba0-df72-4d52-a5b0-7dc69381b27f",
+      "name": "Ban Member Timeout",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -2368,
+        -480
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.telegram.org/bot{{ $env.TELEGRAM_BOT_TOKEN }}/deleteMessage",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ chat_id: $('Get Timed Out Rows').item.json.chat_id, message_id: $('Get Timed Out Rows').item.json.message_id }) }}",
+        "options": {}
+      },
+      "id": "5056ae40-d3d2-494d-8a27-afafb4a503c9",
+      "name": "Delete Challenge Timeout",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -2176,
+        -480
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "DELETE FROM pending_verifications WHERE chat_id = {{ $('Get Timed Out Rows').item.json.chat_id }} AND user_id = {{ $('Get Timed Out Rows').item.json.user_id }};",
+        "options": {}
+      },
+      "id": "d4e40e81-449a-47e2-a608-e9eb506d8bc5",
+      "name": "Delete Pending Row Timeout",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        -1984,
+        -480
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "6WUwV5V3NE7UTeBm",
+          "name": "Postgres account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Is New Member Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is New Member Event": {
+      "main": [
+        [
+          {
+            "node": "Split New Members",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Is Verify Callback",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Verify Callback": {
+      "main": [
+        [
+          {
+            "node": "Parse Callback",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Ignore Other Updates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split New Members": {
+      "main": [
+        [
+          {
+            "node": "Build Challenge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Challenge": {
+      "main": [
+        [
+          {
+            "node": "Restrict New Member",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Restrict New Member": {
+      "main": [
+        [
+          {
+            "node": "Send Challenge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Challenge": {
+      "main": [
+        [
+          {
+            "node": "Prepare DB Row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare DB Row": {
+      "main": [
+        [
+          {
+            "node": "Insert Pending Verification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Callback": {
+      "main": [
+        [
+          {
+            "node": "Is Own Verification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Own Verification": {
+      "main": [
+        [
+          {
+            "node": "Get Pending Row",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Answer Not Yours",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Pending Row": {
+      "main": [
+        [
+          {
+            "node": "Merge Callback And Row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Callback And Row": {
+      "main": [
+        [
+          {
+            "node": "Row Found",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Row Found": {
+      "main": [
+        [
+          {
+            "node": "Is Correct",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Answer Expired",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Correct": {
+      "main": [
+        [
+          {
+            "node": "Unrestrict Member",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Increment Attempts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Unrestrict Member": {
+      "main": [
+        [
+          {
+            "node": "Answer Verified",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Answer Verified": {
+      "main": [
+        [
+          {
+            "node": "Delete Challenge Verified",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete Challenge Verified": {
+      "main": [
+        [
+          {
+            "node": "Delete Pending Row Verified",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete Pending Row Verified": {
+      "main": [
+        [
+          {
+            "node": "Send Welcome",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Increment Attempts": {
+      "main": [
+        [
+          {
+            "node": "Under Limit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Under Limit": {
+      "main": [
+        [
+          {
+            "node": "Build New Challenge",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Ban Member Strikeout",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build New Challenge": {
+      "main": [
+        [
+          {
+            "node": "Edit Challenge Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Challenge Message": {
+      "main": [
+        [
+          {
+            "node": "Update Correct Index",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Correct Index": {
+      "main": [
+        [
+          {
+            "node": "Answer Wrong Try Again",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ban Member Strikeout": {
+      "main": [
+        [
+          {
+            "node": "Delete Challenge Strikeout",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete Challenge Strikeout": {
+      "main": [
+        [
+          {
+            "node": "Delete Pending Row Strikeout",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete Pending Row Strikeout": {
+      "main": [
+        [
+          {
+            "node": "Answer Too Many Attempts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Every Minute": {
+      "main": [
+        [
+          {
+            "node": "Get Timed Out Rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Timed Out Rows": {
+      "main": [
+        [
+          {
+            "node": "Ban Member Timeout",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ban Member Timeout": {
+      "main": [
+        [
+          {
+            "node": "Delete Challenge Timeout",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete Challenge Timeout": {
+      "main": [
+        [
+          {
+            "node": "Delete Pending Row Timeout",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false,
+    "timeSavedMode": "fixed",
+    "timezone": "Asia/Jakarta",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "nodeGroups": [],
+  "tags": []
+}

@@ -1,0 +1,1223 @@
+{
+  "name": "Telegram RAG Bot — Payment / Payout Tracking",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "channel_post",
+          "edited_channel_post",
+          "message",
+          "callback_query"
+        ],
+        "additionalFields": {
+          "download": false
+        }
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -3248,
+        112
+      ],
+      "id": "a872622d-4901-4c2e-b7f2-996f8af28ac5",
+      "name": "Telegram Trigger",
+      "webhookId": "c61b2952-cdbf-4dfe-bf77-0b478732a6f1",
+      "credentials": {
+        "telegramApi": {
+          "id": "Gzt8GYCdmJAP19cR",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.message.chat.id }}",
+                    "rightValue": "YOUR_GROUP_CHAT_ID",
+                    "operator": {
+                      "type": "number",
+                      "operation": "equals"
+                    },
+                    "id": "4fb4c061-cb59-4bbc-af29-0ae39233ce68"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "TRUE"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        -3056,
+        112
+      ],
+      "id": "51d40a7f-54a8-4a9a-acba-5b76422dceec",
+      "name": "Group?"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $('Telegram Trigger').item.json.message.sticker }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "object",
+                      "operation": "notExists",
+                      "singleValue": true
+                    },
+                    "id": "74cb42f0-31d8-4ca8-bce1-b92bf0730b74"
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        -2816,
+        112
+      ],
+      "id": "0fa7862e-cd4e-4b20-aae7-614b8ccc05e7",
+      "name": "Exclude Sticker"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.message.entities[0].type }}",
+                    "rightValue": "bot_command",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "97d0047c-b148-40b0-a80f-fd6aad0d81fb"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "command"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "c8fb7ba1-d311-43da-8b81-86f203f91712",
+                    "leftValue": "={{ $json.message.entities[0].type }}",
+                    "rightValue": "url",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "url"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "592fbe05-daee-4bb4-ac04-b03dca030705",
+                    "leftValue": "={{ $json.message.caption_entities[0].type }}",
+                    "rightValue": "url",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "url2"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "db70061a-2e2e-47ba-b025-3571beb922ed",
+                    "leftValue": "={{ $json.message.entities[0].type }}",
+                    "rightValue": "bot_command",
+                    "operator": {
+                      "type": "string",
+                      "operation": "notEquals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "not_command"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        -1904,
+        16
+      ],
+      "id": "8e033a18-36d7-4be6-a7e2-11bf6e2935b8",
+      "name": "Check Intities"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.message.hasOwnProperty('photo') }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "false",
+                      "singleValue": true
+                    },
+                    "id": "6e9f40f4-70f7-4ade-bc27-795e54054219"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "no image"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "7638b4a7-2787-421a-ad30-f9cf705ce920",
+                    "leftValue": "={{ $json.message.hasOwnProperty('photo') }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "true",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "with image"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        -1328,
+        32
+      ],
+      "id": "58e3a5fa-9dc4-4936-8d66-c316fb8a30bb",
+      "name": "Have Image?1"
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "fileId": "={{ $('Telegram Trigger').item.json.message.photo.last().file_id }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -1136,
+        208
+      ],
+      "id": "91b789e9-9e63-44f0-8707-07a74d34dc2b",
+      "name": "Get Photo File",
+      "webhookId": "REPLACE_ME_WEBHOOK_ID",
+      "credentials": {
+        "telegramApi": {
+          "id": "Gzt8GYCdmJAP19cR",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "operation": "analyze",
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-3.1-flash-lite",
+          "mode": "list",
+          "cachedResultName": "models/gemini-3.1-flash-lite"
+        },
+        "text": "=You are screening an image shared in a job/gig-work Telegram group to classify what kind of payment-related image it is, if any.\n\nMessage caption/text from the poster, if any (use ONLY to help identify a paying company or payment method not visible in the image itself — never invent one): \"{{ $('Telegram Trigger').item.json.message.caption ?? '' }}\"\n\n=== ONLY DIRECT PROOF COUNTS ===\nDirect proof is any of:\n(a) a screenshot of an actual payment/banking app or wallet showing the transaction itself,\n(b) an email or in-app receipt showing transaction details,\n(c) a payout/earnings notification sent DIRECTLY BY the platform or employer to the recipient — e.g. \"Your payout of $X is on its way\", a payslip-style email, an app notification stating an amount and status. This still counts as direct proof even if the same email/message ALSO contains unrelated marketing, referral-program, or cross-sell content (e.g. \"Earn more through referrals\", an \"Explore\" button) elsewhere in the message — ignore that marketing portion and extract only from the actual payout notice,\n(d) a bot-generated notification card from THIS group's own bot (headers like \"INVOICE / BILL\" or \"VERIFIED PAYMENT\").\n\nIf the image is instead a screenshot of a social media post, chat message, or forum thread that merely TALKS ABOUT or DISPLAYS a payment as part of a longer post — recognizable by social-platform UI chrome such as: an avatar + username + \"Follow\"/role-badge header, like/comment/share/bookmark counts, a post-age label (\"8h\", \"22h\", \"2d\"), a \"Translate\" option, \"View activity\", or nested reply/comment threads — this is a REPOST/TESTIMONIAL, not direct proof, even if it contains a visible amount, a \"successful\"/\"completed\" status, or persuasive claims about earnings. Set Category to \"not_payment\" in this case, regardless of what payment-looking content is embedded inside it.\n\n=== PRODUCT / COURSE LISTINGS ARE NOT PAYMENTS ===\nAn ad or storefront-style listing for a course, ebook, service, or product (price/currency badge next to a product title or thumbnail, \"buy now\"-style layout, with NO transaction status and NO invoice framing directed at a specific buyer) is NOT a payment screenshot — set Category to \"not_payment\" even though a price/currency amount is visible.\n\nSet Category to exactly one of:\n- \"paid\": a completed payout/transfer, shown as DIRECT proof (see above) — status wording like \"Completed\", \"Successful\", \"Sent\", \"Submitted\", \"Penarikan sukses\" all count.\n- \"pending\": a payout/payment shown as DIRECT proof that is scheduled, processing, in transit, or awaiting approval — not yet completed/arrived. Includes payout notification emails saying funds are \"on its way\" or \"should appear within X business days\".\n- \"bill_invoice\": an invoice, bill, or payment request shown as DIRECT proof — money owed, not money received. Includes course/product purchase cards explicitly framed as an invoice/bill.\n- \"not_payment\": the image isn't direct payment/financial proof — including product/course/service ads, storefront listings, and social-media/chat reposts or testimonials that merely display or discuss a payment.\n- \"other\": something payment-related that doesn't fit the above.\n\nRegardless of Category, extract whatever of the following is visible — don't leave fields empty just because Category isn't \"paid\":\n- Paying_Company: the employer, client, or company the money is coming FROM (or billed BY, for invoices), if named. Empty string if not shown.\n- Amount: the amount AND currency combined into one string, currency placed where it naturally belongs (e.g. \"USDC 99.34\", \"$1,XXX.XX\", \"USD X53.47\"). If digits are blurred/covered/blacked-out/scribbled, replace each hidden digit with X following normal digit grouping — a hidden group after a thousands comma is exactly 3 X's (e.g. \"$1,XXX\", never \"$1,X\"), a hidden cents group after a decimal point is exactly 2 X's (e.g. \"$1,XXX.XX\"). If the whole amount is hidden, write \"redacted\". Empty string only if no amount appears anywhere.\n- Date: a date/time that is part of the PAYMENT CONTENT itself — e.g. \"sent on...\", an issue date, a due date, a transaction timestamp inside the message or receipt body. Do NOT use timestamps from surrounding UI chrome that aren't part of the payment content — an email/inbox app's \"received at\" time, the phone's status bar clock, a notification badge time, a social post's \"Xh\" age label, etc. If the payment content itself doesn't state a date, leave this empty — don't substitute a nearby UI timestamp. The date format should look like 1 January 2026.\n- Payment_Method: whatever best identifies how/where the money moved or is billed through — a processor/app/bank name (Airtm, PayPal, Deel, Wise, a bank name) OR a generic method (Bank Transfer, Wire, Crypto) if no named service is shown. Use whichever is actually visible; don't guess a name that isn't there. If nothing is visible in the image, check the caption text above before leaving this empty.\n\nRespond with ONLY a single valid JSON object, no markdown, no code fences, no commentary, matching exactly:\n{\n  \"Category\": string,\n  \"Paying_Company\": string,\n  \"Amount\": string,\n  \"Date\": string,\n  \"Payment_Method\": string\n}",
+        "inputType": "binary",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [
+        -976,
+        208
+      ],
+      "id": "0d05efe9-1215-4939-bbbf-58775e7fa3c6",
+      "name": "Analyze Payout",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "8hvw9GQPPFc4G9HD",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Gemini's raw text can land on different fields depending on n8n/node version -\n// check the actual output in a test run and trim this fallback list down.\nlet raw = $json.content.parts[0].text\n  ?? $json.content\n  ?? $json.data\n  ?? $json.candidates?.[0]?.content?.parts?.[0]?.text\n  ?? '';\n\nraw = String(raw).replace(/```json|```/g, '').trim();\n\nlet parsed;\ntry {\n  parsed = JSON.parse(raw);\n} catch (e) {\n  parsed = {\n    Category: 'other',\n    Paying_Company: '',\n    Amount: '',\n    Date: '',\n    Payment_Method: ''\n  };\n}\n\nparsed.is_verified_payout = ['paid', 'bill_invoice', 'pending'].includes(parsed.Category);\n\nreturn { json: parsed };"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -832,
+        208
+      ],
+      "id": "f32a1bca-c262-4114-ac58-2b506d7d4aa4",
+      "name": "Parse Payout"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.is_verified_payout }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              },
+              "id": "verified-payout-condition-004"
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -672,
+        208
+      ],
+      "id": "f3605d63-935b-40b4-a58a-3a4c638ff5c2",
+      "name": "Verified Payout?"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const trigger = $('Telegram Trigger').item.json.message;\nconst parsed = $json;\n\nconst category = parsed.Category || 'paid';\nconst label = {\n  paid: 'Verified payment',\n  pending: 'Pending payment',\n  bill_invoice: 'Invoice / bill'\n}[category] || 'Payment record';\n\nconst payingCompany = parsed.Paying_Company || '';\nconst amount = parsed.Amount || 'not specified';\nconst method = parsed.Payment_Method || '';\nconst date = parsed.Date || '';\nconst firstName = trigger.from.first_name || '';\nconst originalPost = `https://t.me/c/YOUR_GROUP_ID/${trigger.message_thread_id ?? 1}/${trigger.message_id}`;\n\nconst pageContent = `${label} — ${method ? 'Method: ' + method + ' | ' : ''}Amount: ${amount}${payingCompany ? ' | From: ' + payingCompany : ''}${date ? ' | Date: ' + date : ''} | Posted by: ${firstName}`;\n\nreturn {\n  json: {\n    pageContent,\n    metadata: {\n      source: 'payout_proof',\n      category,\n      chat_id: trigger.chat.id,\n      message_id: trigger.message_id,\n      thread_id: trigger.message_thread_id ?? null,\n      sender: firstName,\n      paying_company: payingCompany,\n      amount,\n      payment_method: method,\n      date,\n      original_post: originalPost,\n      timestamp: new Date(trigger.date * 1000).toISOString()\n    }\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -464,
+        96
+      ],
+      "id": "36fc64a4-2106-4f87-9ddb-4f2e47592cb8",
+      "name": "Build Payout Record"
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.embeddingsGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -304,
+        432
+      ],
+      "id": "c7a9b568-696e-4ef9-b5d3-d79a8fb97178",
+      "name": "Embeddings (Payout)",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "8hvw9GQPPFc4G9HD",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonMode": "expressionData",
+        "jsonData": "={{ $json.pageContent }}",
+        "options": {
+          "metadata": {
+            "metadataValues": [
+              {
+                "name": "sender_name",
+                "value": "={{ $('Telegram Trigger').item.json.message.from.first_name }}"
+              },
+              {
+                "name": "username",
+                "value": "={{ $('Telegram Trigger').item.json.message.from.username || '' }}"
+              },
+              {
+                "name": "=chat_id",
+                "value": "={{ $('Telegram Trigger').item.json.message.chat.id }}"
+              },
+              {
+                "name": "message_id",
+                "value": "={{ $('Telegram Trigger').item.json.message.message_id }}"
+              },
+              {
+                "name": "thread_id",
+                "value": "={{ $('Telegram Trigger').item.json.message.message_thread_id || '' }}"
+              },
+              {
+                "name": "created_at_gmt7",
+                "value": "={{ DateTime.fromSeconds($('Telegram Trigger').item.json.message.date).setZone('Asia/Jakarta').toFormat('yyyy-MM-dd HH:mm:ss') }}"
+              },
+              {
+                "name": "reply_to_message_id",
+                "value": "={{ $('Telegram Trigger').item.json.message.reply_to_message.message_id }}"
+              },
+              {
+                "name": "source",
+                "value": "={{ $json.metadata.source }}"
+              },
+              {
+                "name": "user_id",
+                "value": "={{ $('Telegram Trigger').item.json.message.from.id }}"
+              }
+            ]
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1.1,
+      "position": [
+        -176,
+        432
+      ],
+      "id": "ed09ee9d-8e29-40ca-9a62-a809e012a489",
+      "name": "Data Loader3"
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "tableName": "telegram_knowledge",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.1,
+      "position": [
+        -288,
+        96
+      ],
+      "id": "e31622df-7624-4faf-aa9d-4a514a335e27",
+      "name": "Insert Payout",
+      "credentials": {
+        "supabaseApi": {
+          "id": "QYdAmDIZcGklngZ1",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "={{ $('Parse Payout').item.json.Category === 'paid' ? '✅💸 <b>VERIFIED PAYMENT</b> 💸✅' : $('Parse Payout').item.json.Category === 'pending' ? '⏳ <b>PENDING PAYMENT</b> ⏳' : '🧾 <b>INVOICE / BILL</b> 🧾' }}\n\n{{ $('Parse Payout').item.json.Paying_Company ? '🏢 Platform: <b>' + $('Parse Payout').item.json.Paying_Company + '</b>' : '' }}\n💳 Method: <b>{{ $('Parse Payout').item.json.Payment_Method }}</b>\n💰 Amount: <b>{{ $('Parse Payout').item.json.Amount }}</b>\n📅 Date: {{ $('Parse Payout').item.json.Date }}\n\n----------\n📩 Posted By: <b><a href=\"tg://user?id={{ $('Telegram Trigger').item.json.message.from.id }}\">@{{ $('Telegram Trigger').item.json.message.from.first_name }}</a></b>\n📌 Original Post: <a href=\"https://t.me/c/YOUR_GROUP_ID/{{ $('Telegram Trigger').item.json.message.message_thread_id ?? 1 }}/{{ $('Telegram Trigger').item.json.message.message_id }}\">here</a>\n\n#verified #payout #payment {{ $('Parse Payout').item.json.Paying_Company ? '#' + $('Parse Payout').item.json.Paying_Company.trim().split(/\\s+/)[0].replace(/[^a-zA-Z0-9]/g, '') : '' }}",
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "HTML",
+          "message_thread_id": "=VERIFIED_PAYOUT_THREAD_ID"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        16,
+        96
+      ],
+      "id": "1035f52d-0e09-40b4-aefa-f0cb49cd5320",
+      "name": "Send Payout Alert",
+      "webhookId": "REPLACE_ME_WEBHOOK_ID_2",
+      "credentials": {
+        "telegramApi": {
+          "id": "Gzt8GYCdmJAP19cR",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "c-latest",
+                    "leftValue": "={{ $json.message.text }}",
+                    "rightValue": "/latest",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "latest"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "c-recent",
+                    "leftValue": "={{ $json.message.text }}",
+                    "rightValue": "/recent",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "recent"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "c-last100",
+                    "leftValue": "={{ $json.message.text }}",
+                    "rightValue": "/last100",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "last100"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "c-last200",
+                    "leftValue": "={{ $json.message.text }}",
+                    "rightValue": "/last200",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "last200"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "ab4341d4-3ba6-4cd9-bd7d-d14e34fd9696",
+                    "leftValue": "={{ $json.message.text }}",
+                    "rightValue": "/help",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "help"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "6a3179e6-a3a4-48bc-bd37-208d0650d677",
+                    "leftValue": "={{ $json.message.text }}",
+                    "rightValue": "/ask",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "ask"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "d5c80fc7-deae-44ba-97da-605003885d8f",
+                    "leftValue": "={{ $json.message.text }}",
+                    "rightValue": "payment_latest",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "payment_latest"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "569b9ef4-8b5f-4450-86c9-9c9f3a4d316b",
+                    "leftValue": "={{ $json.message.text }}",
+                    "rightValue": "payment_this_month",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "payment_this_month"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "948726ca-dec1-4ea1-82cf-07c341cdf636",
+                    "leftValue": "={{ $json.message.text }}",
+                    "rightValue": "payment_last_month",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "payment_last_month"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "none"
+        }
+      },
+      "id": "fe4a4314-7935-4730-a6af-daa515cd78a9",
+      "name": "Command Router",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        -1440,
+        -1120
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "902b3721-3972-47d2-a014-3e9b5f58c26b",
+              "name": "payDesc",
+              "value": "Latest 10 Payments",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        -944,
+        -816
+      ],
+      "id": "5076ef86-aead-4cb9-acb6-9ebaca6bcdc8",
+      "name": "payDesc (10 Payments)"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "902b3721-3972-47d2-a014-3e9b5f58c26b",
+              "name": "payDesc",
+              "value": "This Month Payments",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        -944,
+        -672
+      ],
+      "id": "71aa5279-7335-4ee4-b84a-c8da6efea300",
+      "name": "payDesc (This Month)"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "902b3721-3972-47d2-a014-3e9b5f58c26b",
+              "name": "payDesc",
+              "value": "Last Month Payments",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        -944,
+        -528
+      ],
+      "id": "232c36f4-9431-4638-8cd7-8d3e0411c696",
+      "name": "payDesc (Last Month)"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT \n  '{{ $json.payDesc }}' AS \"payDesc\",\n    metadata->>'sender_name' AS sender,\n    (metadata->>'created_at_gmt7')::timestamptz AS payment_date,\n    metadata->>'source' AS source,\n    content\nFROM telegram_knowledge\nWHERE (content ILIKE '%pending payment%' OR content ILIKE '%verified payout proof%' OR content ILIKE  '%invoice / bill%')\n  AND metadata->>'source' = 'payout_proof'\nORDER BY (metadata->>'created_at_gmt7')::timestamptz DESC\nLIMIT 10;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        -768,
+        -816
+      ],
+      "id": "4e21a52d-bf1c-4c73-80d0-fd46b9c9067e",
+      "name": "Latest 10 Peyments",
+      "credentials": {
+        "postgres": {
+          "id": "6WUwV5V3NE7UTeBm",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT \n  '{{ $json.payDesc }}' AS \"payDesc\",\n    metadata->>'sender_name' AS sender,\n    (metadata->>'created_at_gmt7')::timestamptz AS payment_date,\n    metadata->>'source' AS source,\n    content\nFROM telegram_knowledge\nWHERE (content ILIKE '%pending payment%' OR content ILIKE '%verified payout proof%' OR content ILIKE  '%invoice / bill%')\n  AND metadata->>'source' = 'payout_proof'\n  AND (metadata->>'created_at_gmt7')::timestamptz >= date_trunc('month', CURRENT_TIMESTAMP)\n  AND (metadata->>'created_at_gmt7')::timestamptz <  date_trunc('month', CURRENT_TIMESTAMP) + INTERVAL '1 month'\nORDER BY (metadata->>'created_at_gmt7')::timestamptz DESC;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        -768,
+        -672
+      ],
+      "id": "f983d8c0-fa1e-420f-9d39-cc0e6a758f6e",
+      "name": "This Month Payments",
+      "credentials": {
+        "postgres": {
+          "id": "6WUwV5V3NE7UTeBm",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT \n  '{{ $json.payDesc }}' AS \"payDesc\",\n    metadata->>'sender_name' AS sender,\n    (metadata->>'created_at_gmt7')::timestamptz AS payment_date,\n    metadata->>'source' AS source,\n    content\nFROM telegram_knowledge\nWHERE (content ILIKE '%pending payment%' OR content ILIKE '%verified payout proof%' OR content ILIKE  '%invoice / bill%')\n  AND metadata->>'source' = 'payout_proof'\n  AND (metadata->>'created_at_gmt7')::timestamptz >= date_trunc('month', CURRENT_TIMESTAMP) - INTERVAL '1 month'\n  AND (metadata->>'created_at_gmt7')::timestamptz <  date_trunc('month', CURRENT_TIMESTAMP)\nORDER BY (metadata->>'created_at_gmt7')::timestamptz DESC;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        -768,
+        -528
+      ],
+      "id": "b735bb84-8eec-4c79-be3c-8d1f81b35ada",
+      "name": "Last Month Payments",
+      "credentials": {
+        "postgres": {
+          "id": "6WUwV5V3NE7UTeBm",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1. Get all items from the previous SQL node\nlet items = $input.all();\n\n// Sort by date: Newest (latest) at the top\nitems.sort((a, b) => new Date(b.json.payment_date) - new Date(a.json.payment_date));\n\n// Helper to escape HTML characters safely for Telegram\nconst escapeHtml = (str) => \n  (str || '')\n    .replace(/&/g, '&amp;')\n    .replace(/</g, '&lt;')\n    .replace(/>/g, '&gt;');\n\n// Get payDesc from the first item, fallback if missing\nconst title = escapeHtml(items[0]?.json?.payDesc || 'Payments');\n\nlet message = `💳 <b>${title}</b>\\n\\n`;\n\n// 2. Loop through each item\nitems.forEach((item) => {\n  const p = item.json;\n  \n  // Format date to \"Jul 15, 2026\"\n  const date = new Date(p.payment_date).toLocaleDateString('en-US', {\n    month: 'short',\n    day: '2-digit',\n    year: 'numeric'\n  });\n\n  const sender = escapeHtml(p.sender);\n\n  // Extract Amount and From fields from content\n  const amountMatch = p.content.match(/Amount:\\s*([^|]+)/i);\n  const fromMatch = p.content.match(/From:\\s*([^|]+)/i);\n\n  let detail = '';\n\n  if (amountMatch) {\n    const amount = amountMatch[1].trim();\n    const from = fromMatch ? fromMatch[1].trim() : '';\n    \n    // If 'From' exists: \"33210 IDR from Uber\", otherwise just \"$307.91\"\n    detail = from ? `${amount} from ${from}` : amount;\n  } else {\n    // Clean fallback if \"Amount:\" tag isn't explicitly present\n    detail = p.content\n      .replace(/^(Pending payment|Verified payout proof|Invoice \\/ Bill)\\s*—\\s*/gi, '')\n      .replace(/\\b(Method|Amount|From):[^|]*\\|\\s*/gi, '')\n      .replace(/\\s*\\|\\s*(Date|Posted by):[^|]*/gi, '')\n      .trim();\n  }\n\n  // Uniform Output: Aug 19, 2026 : Dikta — 33210 IDR from Uber\n  message += `<b>${date}</b> : <b>${sender}</b> — ${escapeHtml(detail)}\\n`;\n});\n\n// 3. Return as an array of objects for n8n\nreturn [\n  {\n    json: {\n      telegram_message: message.trim()\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -480,
+        -672
+      ],
+      "id": "01cd58a1-f870-4319-8db1-1082cfe3025c",
+      "name": "Output Payments"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "={{ $json.telegram_message }} \n\n<i>Selengkapnya dapat dilihat di <a href=\"https://t.me/c/YOUR_GROUP_ID/VERIFIED_PAYOUT_THREAD_ID\"><b>💸 Verified Payout</b></a>.</i>",
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "HTML",
+          "reply_to_message_id": "={{ $('Telegram Trigger').item.json.message.message_id }}"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -272,
+        -672
+      ],
+      "id": "c165eae9-37fe-46a9-addc-1980b975c1a8",
+      "name": "Send Payment List",
+      "webhookId": "2a2a5c18-9aea-492a-9ede-4c6078456a9d",
+      "credentials": {
+        "telegramApi": {
+          "id": "Gzt8GYCdmJAP19cR",
+          "name": "Telegram account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Group?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Have Image?1": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Get Photo File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Intities": {
+      "main": [
+        [
+          {
+            "node": "Command Router",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Have Image?1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Have Image?1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Have Image?1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Command Router": {
+      "main": [
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+        [
+          {
+            "node": "payDesc (10 Payments)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "payDesc (This Month)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "payDesc (Last Month)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Group?": {
+      "main": [
+        [
+          {
+            "node": "Exclude Sticker",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Exclude Sticker": {
+      "main": [
+        [
+          {
+            "node": "Check Intities",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verified Payout?": {
+      "main": [
+        [
+          {
+            "node": "Build Payout Record",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Build Payout Record": {
+      "main": [
+        [
+          {
+            "node": "Insert Payout",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analyze Payout": {
+      "main": [
+        [
+          {
+            "node": "Parse Payout",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Payout": {
+      "main": [
+        [
+          {
+            "node": "Verified Payout?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings (Payout)": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Insert Payout",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Data Loader3": {
+      "ai_document": [
+        [
+          {
+            "node": "Insert Payout",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Photo File": {
+      "main": [
+        [
+          {
+            "node": "Analyze Payout",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Latest 10 Peyments": {
+      "main": [
+        [
+          {
+            "node": "Output Payments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "This Month Payments": {
+      "main": [
+        [
+          {
+            "node": "Output Payments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "payDesc (10 Payments)": {
+      "main": [
+        [
+          {
+            "node": "Latest 10 Peyments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "payDesc (This Month)": {
+      "main": [
+        [
+          {
+            "node": "This Month Payments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "payDesc (Last Month)": {
+      "main": [
+        [
+          {
+            "node": "Last Month Payments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Last Month Payments": {
+      "main": [
+        [
+          {
+            "node": "Output Payments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Output Payments": {
+      "main": [
+        [
+          {
+            "node": "Send Payment List",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert Payout": {
+      "main": [
+        [
+          {
+            "node": "Send Payout Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false,
+    "timeSavedMode": "fixed",
+    "timezone": "Asia/Jakarta",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "nodeGroups": [],
+  "tags": []
+}

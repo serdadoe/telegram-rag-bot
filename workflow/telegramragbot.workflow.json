@@ -1,0 +1,4842 @@
+{
+  "name": "Telegram BOT Full",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "channel_post",
+          "edited_channel_post",
+          "message",
+          "callback_query"
+        ],
+        "additionalFields": {
+          "download": false
+        }
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -3248,
+        112
+      ],
+      "id": "a872622d-4901-4c2e-b7f2-996f8af28ac5",
+      "name": "Telegram Trigger",
+      "webhookId": "c61b2952-cdbf-4dfe-bf77-0b478732a6f1",
+      "credentials": {
+        "telegramApi": {
+          "id": "Gzt8GYCdmJAP19cR",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.embeddingsGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        416,
+        512
+      ],
+      "id": "2ec45bc6-c5b2-4734-9e13-1ad7a7c69ae5",
+      "name": "Embeddings Google Gemini1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "8hvw9GQPPFc4G9HD",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonMode": "expressionData",
+        "jsonData": "={{ $json.message.from.first_name }} : {{ $json.message.text }}",
+        "options": {
+          "metadata": {
+            "metadataValues": [
+              {
+                "name": "sender_name",
+                "value": "={{ $json.message.from.first_name }}"
+              },
+              {
+                "name": "username",
+                "value": "={{ $json.message.from.username || '' }}"
+              },
+              {
+                "name": "=chat_id",
+                "value": "={{ $json.message.chat.id }}"
+              },
+              {
+                "name": "message_id",
+                "value": "={{ $json.message.message_id }}"
+              },
+              {
+                "name": "thread_id",
+                "value": "={{ $json.message.message_thread_id || '' }}"
+              },
+              {
+                "name": "created_at_gmt7",
+                "value": "={{ DateTime.fromSeconds($json.message.date).setZone('Asia/Jakarta').toFormat('yyyy-MM-dd HH:mm:ss') }}"
+              },
+              {
+                "name": "reply_to_message_id",
+                "value": "={{ $json.message.reply_to_message.message_id}}"
+              },
+              {
+                "name": "user_id",
+                "value": "={{ $('Telegram Trigger').item.json.message.from.id }}"
+              }
+            ]
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1.1,
+      "position": [
+        720,
+        464
+      ],
+      "id": "badd68f7-9afa-4206-ada3-46a274ed07ba",
+      "name": "Data Loader"
+    },
+    {
+      "parameters": {
+        "jsonMode": "expressionData",
+        "jsonData": "={{ $('Telegram Trigger').item.json.message.from.first_name }} : {{ $('Telegram Trigger').item.json.message.caption ? $('Telegram Trigger').item.json.message.caption + ' | ' : '' }}{{ $json.content.parts[0].text }}",
+        "options": {
+          "metadata": {
+            "metadataValues": [
+              {
+                "name": "sender_name",
+                "value": "={{ $('Telegram Trigger').item.json.message.from.first_name }}"
+              },
+              {
+                "name": "username",
+                "value": "={{ $('Telegram Trigger').item.json.message.from.username }}"
+              },
+              {
+                "name": "=chat_id",
+                "value": "={{ $('Telegram Trigger').item.json.message.chat.id }}"
+              },
+              {
+                "name": "message_id",
+                "value": "={{ $('Telegram Trigger').item.json.message.message_id }}"
+              },
+              {
+                "name": "thread_id",
+                "value": "={{ $('Telegram Trigger').item.json.message.message_thread_id}}"
+              },
+              {
+                "name": "created_at_gmt7",
+                "value": "={{ DateTime.fromSeconds($('Telegram Trigger').item.json.message.date).setZone('Asia/Jakarta').toFormat('yyyy-MM-dd HH:mm:ss') }}"
+              },
+              {
+                "name": "reply_to_message_id",
+                "value": "={{ $('Telegram Trigger').item.json.message.reply_to_message.message_id}}"
+              },
+              {
+                "name": "user_id",
+                "value": "={{ $('Telegram Trigger').item.json.message.from.id }}"
+              },
+              {
+                "name": "source",
+                "value": "image"
+              }
+            ]
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1.1,
+      "position": [
+        592,
+        464
+      ],
+      "id": "d6dac3e7-59bc-4d0d-abdc-efdd6ea57414",
+      "name": "Data Loader1"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.message.hasOwnProperty('photo') }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "false",
+                      "singleValue": true
+                    },
+                    "id": "6e9f40f4-70f7-4ade-bc27-795e54054219"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "no image"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "7638b4a7-2787-421a-ad30-f9cf705ce920",
+                    "leftValue": "={{ $json.message.hasOwnProperty('photo') }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "true",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "with image"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        -1328,
+        32
+      ],
+      "id": "58e3a5fa-9dc4-4936-8d66-c316fb8a30bb",
+      "name": "Have Image?1"
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "operation": "analyze",
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-3.1-flash-lite",
+          "mode": "list",
+          "cachedResultName": "models/gemini-3.1-flash-lite"
+        },
+        "text": "=Describe this image in a single continuous paragraph of plain prose — no bullet points, numbered lists, markdown, or headers, and no introductory phrases like \"This image shows\" or \"The image depicts\". Open directly with the subject matter.\n\nTreat this as an OCR-plus-context task: transcribe every piece of visible text exactly as written (titles, axis/column labels, category names, numeric values, units, source or attribution lines, watermarks), preserving Indonesian number formatting (e.g. \".\" as thousands separator) rather than reformatting or rounding. Where a label is paired with a value (a category next to a bar, a row in a table), keep that pairing intact and state them together, and preserve the order and grouping shown in the image (e.g. left column before right column, top to bottom) rather than mixing them up. If the image contains many similar rows (a long list of regions or categories with values), transcribe all of them once each, in order — do not summarize a long list down to a few examples, but also never repeat an item or a block of items you've already stated. If incidental UI chrome is visible (a browser button, a \"Close\" button, a cursor, a watermark unrelated to the content) mention it only in passing if at all, and don't let it interrupt the flow of the actual content.\n\nAfter transcribing the text, briefly state in your own words what the image is illustrating or comparing, so the paragraph conveys both what is written and what it means. Write in full sentences, and make sure your final sentence is complete — do not trail off or cut the description short partway through a thought or list.\n\nIf a caption is provided below, use it only to clarify who/what is shown (e.g. resolve ambiguity) — do not quote or repeat it, and do not let it override what's actually visible in the image.\n\nCaption from sender: {{ $('Telegram Trigger').item.json.message.caption ? $('Telegram Trigger').item.json.message.caption : 'None' }}",
+        "inputType": "binary",
+        "options": {
+          "maxOutputTokens": 300
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        256,
+        272
+      ],
+      "id": "81f57db2-5153-4de4-ba0b-14c39584bf73",
+      "name": "Analyze an image",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "8hvw9GQPPFc4G9HD",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "=Hello {{ $('Telegram Trigger').item.json.message.from.first_name }}, berikut <b><i>command</i></b> yang dapat kamu gunakan:\n\n📌 <b>Command List</b>\n<code>/latest</code> - Rangkum chat 3 jam terakhir\n<code>/recent</code> - Rangkum chat 6 jam terakhir\n<code>/last100</code> - Rangkum 100 chat terakhir\n<code>/last200</code> - Rangkum 200 chat terakhir\n<code>/payment_latest</code> - Get the latest 10 payments\n<code>/payment_this_month</code> - Get this month payments\n<code>/payment_last_month</code> - Get last month payments\n<code>/ask [pertanyaan kamu]</code> - Tanya apa saja ke mengenai konten grup\n<code>/help</code> - Tampilkan pesan bantuan ini\n\n💡 Ketik <i>command</i> di dalam chat untuk mendapatkan rnagkuman chat secara otomatis.",
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "HTML",
+          "reply_to_message_id": "={{ $('Telegram Trigger').item.json.message.message_id }}"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -944,
+        -1152
+      ],
+      "id": "39ba8698-870c-4cad-bb9e-fcfdd98d4ec3",
+      "name": "Send How to Use Bot",
+      "webhookId": "1e356b33-6ea4-436d-8597-eac7282aea45",
+      "credentials": {
+        "telegramApi": {
+          "id": "Gzt8GYCdmJAP19cR",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "={{ $json.content.parts[0].text }}\n\n-----\n<i>AI-generated answers may be inaccurate.</i>",
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "HTML",
+          "reply_to_message_id": "={{ $('Telegram Trigger').item.json.message.message_id }}",
+          "message_thread_id": "={{ $('Telegram Trigger').item.json.message.message_thread_id }}"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        16,
+        -1616
+      ],
+      "id": "ce066f3f-8ae3-469f-93a4-4df28e8abc6d",
+      "name": "Send Command Response",
+      "webhookId": "1e356b33-6ea4-436d-8597-eac7282aea45",
+      "credentials": {
+        "telegramApi": {
+          "id": "Gzt8GYCdmJAP19cR",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "for (const item of $input.all()) {\n  const msg = item.json.message || {};\n  const text = msg.text || '';\n  const urlEntity = (msg.entities || []).find(e => e.type === 'url');\n\n  const link = urlEntity\n    ? text.substring(urlEntity.offset, urlEntity.offset + urlEntity.length)\n    : (text.match(/https?:\\/\\/\\S+/)?.[0] ?? null);\n\n  item.json.link = link;\n  item.json.linkClean = link\n    ? link.replace(/^https?:\\/\\//i, '').replace(/^www\\./i, '')\n    : null;\n}\n\nreturn $input.all();"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1344,
+        -304
+      ],
+      "id": "b64d6aaf-0096-4537-940b-7998410118d4",
+      "name": "Extract Link"
+    },
+    {
+      "parameters": {
+        "url": "=https://r.jina.ai/{{ $json.linkClean }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -1104,
+        -304
+      ],
+      "id": "ed810db7-aec1-4750-82e7-1e79068b25a2",
+      "name": "Get Link Info"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Analyze the following Telegram message and link context to extract job posting details.\n\n---\nMessage / Web Context:\n{{ $json.data }}\n",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are an AI assistant designed to analyze incoming messages or web content and determine if they describe a job opening/hiring post.\n\nYour task:\n1. Determine if the text represents a legitimate job opening, freelance gig, or hiring request.\n2. If it IS a job opening, extract the relevant fields and set \"is_job_opening\" to true.\n3. If it IS NOT a job opening (e.g., spam, general chat, someone seeking a job, promotional material), set \"is_job_opening\" to false and use empty strings for the detail fields."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -880,
+        -304
+      ],
+      "id": "2ae5e092-dd66-4d97-8db0-35d8a3a3d3e0",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3.1-flash-lite",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        -880,
+        -112
+      ],
+      "id": "83620eed-e5ee-419a-afd8-6766ff73d754",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "8hvw9GQPPFc4G9HD",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"is_job_opening\": {\n      \"type\": \"boolean\",\n      \"description\": \"True if this post is a job opening or hiring call, false otherwise\"\n    },\n    \"Role\": {\n      \"type\": \"string\",\n      \"description\": \"Job title or role name. Use an empty string if no role is provided.\"\n    },\n    \"Platform\": {\n      \"type\": \"string\",\n      \"description\": \"Name of the platform or company mentioned (e.g., Mercor, Turing, Upwork, LinkedIn, direct Telegram hire), with no spaces. Use an empty string if none is provided.\"\n    },\n    \"Link\": {\n      \"type\": \"string\",\n      \"description\": \"Extracted URL/link included in the post. Use an empty string if no link is provided.\"\n    },\n    \"Rate\": {\n      \"type\": \"string\",\n      \"description\": \"Salary, rate, or compensation details. Use an 'not specified' if none is provided.\"\n    },\n    \"Job_Description\": {\n      \"type\": \"string\",\n      \"description\": \"Focus strictly on day-to-day responsibilities and tasks. If specific daily tasks aren't provided, summarize what the hiring platform or company does instead. Use an empty string if not applicable.\"\n    },\n    \"Posted_By_First_Name\": {\n      \"type\": \"string\",\n      \"description\": \"First name of the sender. Use an empty string if unknown.\"\n    }\n  },\n  \"required\": [\n    \"is_job_opening\",\n    \"Role\",\n    \"Platform\",\n    \"Link\",\n    \"Rate\",\n    \"Job_Description\",\n    \"Posted_By_First_Name\"\n  ]\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        -704,
+        -112
+      ],
+      "id": "18ae9c40-6f52-47db-b655-87613cab1e90",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "=🔎✨ <b>NEW JOB OPENING</b> ✨🔎\n\n👤 Role: <b>{{ $('Job Opening Only').item.json.output.Role }}</b>\n🏢 Platform: {{ $('Job Opening Only').item.json.output.Platform }}\n🔗 Link: {{ $('Job Opening Only').item.json.output.Link }}\n💰 Rate: <b>{{ $('Job Opening Only').item.json.output.Rate }}</b>\n\n📝 Description: <i>{{ $('Job Opening Only').item.json.output.Job_Description }}</i>\n\n----------\n📩 Posted By: <b><a href=\"tg://user?id={{ $('Telegram Trigger').item.json.message.from.id }}\">@{{ $('Telegram Trigger').item.json.message.from.first_name }}</a></b>\n📌 Original Post: <a href=\"https://t.me/c/YOUR_GROUP_ID/{{ $('Telegram Trigger').item.json.message.message_thread_id ?? 1 }}/{{ $('Telegram Trigger').item.json.message.message_id }}\">here</a>\n\n#jobposting #lowongan #{{ $('Job Opening Only').item.json.output.Platform }}",
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "HTML",
+          "message_thread_id": "=JOB_OPENING_THREAD_ID"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        208,
+        -304
+      ],
+      "id": "ad4b9d1e-f495-4195-b11f-248ab34b898b",
+      "name": "Send Job Posting",
+      "webhookId": "1e356b33-6ea4-436d-8597-eac7282aea45",
+      "credentials": {
+        "telegramApi": {
+          "id": "Gzt8GYCdmJAP19cR",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.output.is_job_opening }}",
+                    "rightValue": "true",
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "true",
+                      "singleValue": true
+                    },
+                    "id": "3ae794c3-9e13-461e-8ab3-f141476ecb64"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "true"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        -528,
+        -304
+      ],
+      "id": "07a32156-e992-418d-a44d-1a2f6539a9dd",
+      "name": "Job Opening Only"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.message.entities[0].type }}",
+                    "rightValue": "bot_command",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "97d0047c-b148-40b0-a80f-fd6aad0d81fb"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "command"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "c8fb7ba1-d311-43da-8b81-86f203f91712",
+                    "leftValue": "={{ $json.message.entities[0].type }}",
+                    "rightValue": "url",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "url"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "592fbe05-daee-4bb4-ac04-b03dca030705",
+                    "leftValue": "={{ $json.message.caption_entities[0].type }}",
+                    "rightValue": "url",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "url2"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "db70061a-2e2e-47ba-b025-3571beb922ed",
+                    "leftValue": "={{ $json.message.entities[0].type }}",
+                    "rightValue": "bot_command",
+                    "operator": {
+                      "type": "string",
+                      "operation": "notEquals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "not_command"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        -1904,
+        16
+      ],
+      "id": "8e033a18-36d7-4be6-a7e2-11bf6e2935b8",
+      "name": "Check Intities"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "c-latest",
+                    "leftValue": "={{ $json.message.text }}",
+                    "rightValue": "/latest",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "latest"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "c-recent",
+                    "leftValue": "={{ $json.message.text }}",
+                    "rightValue": "/recent",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "recent"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "c-last100",
+                    "leftValue": "={{ $json.message.text }}",
+                    "rightValue": "/last100",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "last100"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "c-last200",
+                    "leftValue": "={{ $json.message.text }}",
+                    "rightValue": "/last200",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "last200"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "ab4341d4-3ba6-4cd9-bd7d-d14e34fd9696",
+                    "leftValue": "={{ $json.message.text }}",
+                    "rightValue": "/help",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "help"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "6a3179e6-a3a4-48bc-bd37-208d0650d677",
+                    "leftValue": "={{ $json.message.text }}",
+                    "rightValue": "/ask",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "ask"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "d5c80fc7-deae-44ba-97da-605003885d8f",
+                    "leftValue": "={{ $json.message.text }}",
+                    "rightValue": "payment_latest",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "payment_latest"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "569b9ef4-8b5f-4450-86c9-9c9f3a4d316b",
+                    "leftValue": "={{ $json.message.text }}",
+                    "rightValue": "payment_this_month",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "payment_this_month"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "948726ca-dec1-4ea1-82cf-07c341cdf636",
+                    "leftValue": "={{ $json.message.text }}",
+                    "rightValue": "payment_last_month",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "payment_last_month"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "none"
+        }
+      },
+      "id": "fe4a4314-7935-4730-a6af-daa515cd78a9",
+      "name": "Command Router",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        -1440,
+        -1120
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "h1",
+              "name": "hoursAgo",
+              "value": 3,
+              "type": "number"
+            },
+            {
+              "id": "888bced9-d277-48d9-9245-0e3a2521a7b4",
+              "name": "cmdDesc",
+              "value": "chat 3 jam yang lalu",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "b9b68d11-c215-4456-85e8-5a82229fd835",
+      "name": "Set hoursAgo (latest)",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -944,
+        -1824
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "h2",
+              "name": "hoursAgo",
+              "value": 6,
+              "type": "number"
+            },
+            {
+              "id": "e7a55630-2223-4c7c-9be0-4fcb9a95a06e",
+              "name": "cmdDesc",
+              "value": "chat 6 jam yang lalu",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "b6bad76d-0cc0-42a9-be98-37e01ee12fa5",
+      "name": "Set hoursAgo (recent)",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -944,
+        -1648
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "l1",
+              "name": "messageLimit",
+              "value": 100,
+              "type": "number"
+            },
+            {
+              "id": "a96e290b-7878-4a10-aac6-a75242e22c27",
+              "name": "cmdDesc",
+              "value": "100 chat terakhir",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "04eae283-ccbc-4a2b-b5a5-9ca6032102d0",
+      "name": "Set messageLimit (100)",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -944,
+        -1488
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "l2",
+              "name": "messageLimit",
+              "value": 200,
+              "type": "number"
+            },
+            {
+              "id": "ec838886-77f5-4a59-84dd-eea189a85906",
+              "name": "cmdDesc",
+              "value": "200 chat terakhir",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "20bd9be5-73e8-4307-b67e-fee2a762d4c6",
+      "name": "Set messageLimit (200)",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -944,
+        -1328
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT id, created_at, content, metadata, '{{ $json.cmdDesc }}' AS cmd_desc\nFROM public.telegram_knowledge\nWHERE metadata->>'thread_id' IS NOT NULL\n  AND metadata->>'thread_id' <> ''\n  AND (metadata->>'thread_id')::bigint = {{ $('Telegram Trigger').item.json.message.message_thread_id }}\nORDER BY (metadata->>'created_at_gmt7')::timestamp DESC\nLIMIT {{ $json.messageLimit }};",
+        "options": {}
+      },
+      "id": "e72292a7-250e-48d3-9b50-b89df53d3edd",
+      "name": "Last N Messages",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.4,
+      "position": [
+        -704,
+        -1504
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "6WUwV5V3NE7UTeBm",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT id, created_at, content, metadata, '{{ $json.cmdDesc }}' AS cmd_desc\nFROM public.telegram_knowledge\nWHERE (metadata->>'created_at_gmt7')::timestamp >= \n      (NOW() AT TIME ZONE 'Asia/Jakarta') - (INTERVAL '1 hour' * {{ $json.hoursAgo }})\n  AND metadata->>'thread_id' IS NOT NULL\n  AND metadata->>'thread_id' <> ''\n  {{ $('Telegram Trigger').item.json.message?.message_thread_id ? \"AND (metadata->>'thread_id')::bigint = \" + $('Telegram Trigger').item.json.message.message_thread_id : \"\" }}\nORDER BY (metadata->>'created_at_gmt7')::timestamp DESC;",
+        "options": {}
+      },
+      "id": "ce5830b8-a1fd-40df-859e-e5bf5f65fffc",
+      "name": "Last X Hours Messages",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.4,
+      "position": [
+        -704,
+        -1744
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "6WUwV5V3NE7UTeBm",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fieldsToAggregate": {
+          "fieldToAggregate": [
+            {
+              "fieldToAggregate": "content"
+            },
+            {
+              "fieldToAggregate": "cmd_desc"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        -480,
+        -1616
+      ],
+      "id": "48363413-06d7-4ad2-ab1b-1a0f79841fd3",
+      "name": "Aggregate"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-3.1-flash-lite",
+          "mode": "list",
+          "cachedResultName": "models/gemini-3.1-flash-lite"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Summarize the chat history below.\n\nCHAT HISTORY:\n{{ $json.content }}\n---\n\nOUTPUT FORMAT:\n\n<i>Berikut adalah rangkuman {{ $json.cmd_desc[0] }} di channel ini.</i>\n\n🎯 <b>Pembahasan Utama</b>: 1-2 sentence overview of the conversation.\n📌 <b>Key Topics</b>: Bulleted list of the main subjects discussed (1 very short sentence per item)."
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {
+          "systemMessage": "You are a chat summarization bot for a team's Telegram channel. Analyze the conversation history provided and produce a clear, concise summary of key points, following these rules:  1. Filter out noise — ignore greetings, small talk, single-word replies, bot chatter, and unclear or pointless chatter (e.g. random mentions of body parts/genitals with no real topic or substance). 2. Focus on substance — highlight the main topics discussed, decisions made, problems identified, and action items. 3. Exclude crude, vulgar, or explicit sexual talk (dirty jokes, sexual banter, etc.). However, DO include discussions that are genuinely about sexual/reproductive health, medical topics, or education — do not filter those out just because they mention sex. 4. Attribute key ideas or decisions to the person who raised them, when clear from the chat. 5. Write the summary in Indonesian (Bahasa Indonesia). 6. Output must use Telegram-compatible HTML tags only (e.g. <b>bold</b>, <i>italic</i>) — never Markdown or asterisks. Wrap any English words, loanwords, or technical terms in <i>italic</i> tags. 7. Match the summary length to the time range or number of chat being covered: up to 3 hours or last 100 chats → max 1000 characters; up to 6 hours or last 200 chats → max 2000 characters. Stay strictly within the limit so it fits in a single Telegram message.  If the chat history is not already provided in the user message, use the Supabase tool to retrieve it before summarizing."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        -288,
+        -1616
+      ],
+      "id": "8b32002d-87f7-4c23-8d3a-5e453545f866",
+      "name": "Message a model1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "8hvw9GQPPFc4G9HD",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "q1",
+              "name": "question",
+              "value": "={{ $json.message.text.replace(/^\\/ask(?:@\\S+)?\\s*/i, '') }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "12144679-c1e6-45be-aa69-ccfeded9d366",
+      "name": "Parse Question",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -944,
+        -976
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:embedContent?key={{ $env.GEMINI_API_KEY }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"content\": { \"parts\": [{ \"text\": {{ JSON.stringify($json.question) }} }] }\n}",
+        "options": {}
+      },
+      "id": "4868089a-3bd8-4a8a-ae32-a4aceea61ab8",
+      "name": "Embed Question",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -768,
+        -976
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "WITH RECURSIVE\nvector_seed AS (\n  SELECT id, content, metadata, created_at,\n         row_number() OVER (ORDER BY similarity DESC) AS rnk\n  FROM match_documents_v2(\n    '[{{ $json.embedding.values.join(\",\") }}]'::vector,\n    40,\n    YOUR_GROUP_CHAT_ID\n  )\n),\nkeyword_seed AS (\n  SELECT id, content, metadata, created_at,\n         row_number() OVER (ORDER BY ts_rank(content_tsv, query) DESC) AS rnk\n  FROM public.telegram_knowledge, to_tsquery('simple', '{{ $json.keywordPattern }}') query\n  WHERE chat_id = YOUR_GROUP_CHAT_ID\n    AND '{{ $json.keywordPattern }}' <> ''\n    AND content_tsv @@ query\n  ORDER BY ts_rank(content_tsv, query) DESC\n  LIMIT 40\n),\nfused AS (\n  SELECT\n    COALESCE(v.id, k.id) AS id,\n    COALESCE(v.content, k.content) AS content,\n    COALESCE(v.metadata, k.metadata) AS metadata,\n    COALESCE(v.created_at, k.created_at) AS created_at,\n    (1.0 / (60 + COALESCE(v.rnk, 1000))) + (1.0 / (60 + COALESCE(k.rnk, 1000))) AS hybrid_score\n  FROM vector_seed v\n  FULL OUTER JOIN keyword_seed k ON v.id = k.id\n),\nall_seed AS (\n  (SELECT id, content, metadata, created_at, hybrid_score\n   FROM fused ORDER BY hybrid_score DESC LIMIT 15)\n\n  UNION\n\n  (SELECT f.id, f.content, f.metadata, f.created_at, f.hybrid_score\n   FROM vector_seed v JOIN fused f ON v.id = f.id\n   WHERE v.rnk <= 10)\n\n  UNION\n\n  (SELECT f.id, f.content, f.metadata, f.created_at, f.hybrid_score\n   FROM keyword_seed k JOIN fused f ON k.id = f.id\n   WHERE k.rnk <= 10)\n),\nancestors AS (\n  SELECT tk.id, tk.content, tk.metadata, tk.created_at, tk.message_id, tk.reply_to_message_id, tk.chat_id, 0 AS depth, s.hybrid_score\n  FROM public.telegram_knowledge tk JOIN all_seed s ON tk.id = s.id\n  UNION ALL\n  SELECT parent.id, parent.content, parent.metadata, parent.created_at, parent.message_id, parent.reply_to_message_id, parent.chat_id, a.depth + 1, a.hybrid_score\n  FROM public.telegram_knowledge parent\n  JOIN ancestors a ON parent.message_id = a.reply_to_message_id AND parent.chat_id = a.chat_id\n  WHERE a.depth < 10\n),\ndescendants AS (\n  SELECT tk.id, tk.content, tk.metadata, tk.created_at, tk.message_id, tk.reply_to_message_id, tk.chat_id, 0 AS depth, s.hybrid_score\n  FROM public.telegram_knowledge tk JOIN all_seed s ON tk.id = s.id\n  UNION ALL\n  SELECT child.id, child.content, child.metadata, child.created_at, child.message_id, child.reply_to_message_id, child.chat_id, d.depth + 1, d.hybrid_score\n  FROM public.telegram_knowledge child\n  JOIN descendants d ON child.reply_to_message_id = d.message_id AND child.chat_id = d.chat_id\n  WHERE d.depth < 10\n),\ncombined AS (\n  SELECT DISTINCT ON (id) id, content, metadata, created_at, hybrid_score\n  FROM (\n    SELECT id, content, metadata, created_at, hybrid_score FROM ancestors\n    UNION ALL\n    SELECT id, content, metadata, created_at, hybrid_score FROM descendants\n  ) u\n  ORDER BY id, hybrid_score DESC NULLS LAST\n)\nSELECT id, content, metadata, created_at, hybrid_score\nFROM combined\nORDER BY hybrid_score DESC NULLS LAST, created_at;",
+        "options": {}
+      },
+      "id": "3e21f036-5fb4-4b60-8569-2e8c3907fec4",
+      "name": "Search Vector DB",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.4,
+      "position": [
+        -416,
+        -976
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "6WUwV5V3NE7UTeBm",
+          "name": "Postgres account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.message.chat.id }}",
+                    "rightValue": "YOUR_GROUP_CHAT_ID",
+                    "operator": {
+                      "type": "number",
+                      "operation": "equals"
+                    },
+                    "id": "4fb4c061-cb59-4bbc-af29-0ae39233ce68"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "TRUE"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        -3056,
+        112
+      ],
+      "id": "51d40a7f-54a8-4a9a-acba-5b76422dceec",
+      "name": "Group?"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $('Telegram Trigger').item.json.message.sticker }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "object",
+                      "operation": "notExists",
+                      "singleValue": true
+                    },
+                    "id": "74cb42f0-31d8-4ca8-bce1-b92bf0730b74"
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        -2816,
+        112
+      ],
+      "id": "0fa7862e-cd4e-4b20-aae7-614b8ccc05e7",
+      "name": "Exclude Sticker"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $('Telegram Trigger').item.json.message.document.mime_type }}",
+                    "rightValue": "application/pdf",
+                    "operator": {
+                      "type": "string",
+                      "operation": "notEquals"
+                    },
+                    "id": "bdc5f5cc-fa6a-48f6-ba27-36e10e0a6898"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "not pdf"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "0b2855e3-bbcf-4b29-87ab-50e3482908b7",
+                    "leftValue": "={{ $('Telegram Trigger').item.json.message.document.mime_type }}",
+                    "rightValue": "application/pdf",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "pdf"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        -1280,
+        736
+      ],
+      "id": "f7793631-f951-43e7-a57e-b90ca694c39b",
+      "name": "File Type"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.message.document }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "object",
+                      "operation": "notEmpty",
+                      "singleValue": true
+                    },
+                    "id": "68e3929a-356e-47c9-9ffd-2bc0fd103943"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "yes"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        -2160,
+        752
+      ],
+      "id": "023dc41a-6292-4a04-86b1-4a8e83587cd5",
+      "name": "Contain Doc?"
+    },
+    {
+      "parameters": {
+        "maxConcurrency": 1
+      },
+      "type": "@mazix/n8n-nodes-converter-documents.convertFileToJson",
+      "typeVersion": 5,
+      "position": [
+        -896,
+        656
+      ],
+      "id": "0851e1c1-20a0-4bbf-9da8-f93494933797",
+      "name": "Convert File to JSON",
+      "notesInFlow": true,
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "resource": "document",
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-3.1-flash-lite",
+          "mode": "list",
+          "cachedResultName": "models/gemini-3.1-flash-lite"
+        },
+        "text": "Extract all readable text from this PDF document, preserving structure and reading order.\n\nFirst output this header block:\nTitle: [document title, or \"Untitled\" if none is visible]\nDocument Type: [journal article / research paper / report / news article / invoice / form / presentation / other]\nLanguage: [primary language(s) detected]\n\nThen extract the full body text:\n- Preserve original reading order, headings, and section breaks.\n- Transcribe body text exactly as it appears. Do not paraphrase, summarize, or invent content.\n- For any table, chart, or diagram, insert a brief plain-language explanation of what it shows, placed inline at the point where it appears (not moved elsewhere), wrapped as [Table/Figure: explanation]. This is the one place paraphrasing is allowed.\n- If any part is illegible or unclear, mark it as [illegible] rather than guessing.\n\nReturn ONLY the header block and the extracted text. Do not add conversational filler, summaries, or intro/outro text.",
+        "inputType": "binary",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        -880,
+        912
+      ],
+      "id": "7443b815-8172-4f46-8956-b96dff2a197f",
+      "name": "Analyze document",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "8hvw9GQPPFc4G9HD",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "fileId": "={{ $('Telegram Trigger').item.json.message.document.file_id }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -1056,
+        656
+      ],
+      "id": "19223cd6-3c94-4776-977d-a118e7df98e0",
+      "name": "Get non PDF",
+      "webhookId": "79d92af5-ae65-4c0a-85c3-97b465195b90",
+      "credentials": {
+        "telegramApi": {
+          "id": "Gzt8GYCdmJAP19cR",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "fileId": "={{ $('Telegram Trigger').item.json.message.document.file_id }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -1056,
+        912
+      ],
+      "id": "aa528a4a-ac28-4825-aa17-fc5d6cdb5d70",
+      "name": "Get PDF",
+      "webhookId": "79d92af5-ae65-4c0a-85c3-97b465195b90",
+      "credentials": {
+        "telegramApi": {
+          "id": "Gzt8GYCdmJAP19cR",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const current = $input.item.json;\nconst msg = $('Telegram Trigger').item.json.message;\nconst threadId = msg.message_thread_id ?? msg.chat.id;\nconst isRealReply = msg.reply_to_message && msg.reply_to_message.message_id !== threadId;\nconst replyToMessageId = isRealReply ? msg.reply_to_message.message_id : threadId;\n\n// Convert a sheet's row objects (keyed by column letter, e.g. A/B/C) into\n// readable \"Header: value\" lines, using the sheet's first row as headers.\nfunction sheetToText(sheetName, rows) {\n  if (!Array.isArray(rows) || rows.length === 0) return `Sheet: ${sheetName}\\n(empty)`;\n  const headerRow = rows[0];\n  const cols = Object.keys(headerRow);\n  const lines = rows.slice(1).map(row =>\n    cols.map(col => `${headerRow[col] ?? col}: ${row[col] ?? ''}`).join(' | ')\n  );\n  return `Sheet: ${sheetName}\\n${lines.join('\\n')}`;\n}\n\nfunction fileToText(f) {\n  if (typeof f.text === 'string' && f.text.trim()) return f.text;\n  if (f.sheets && typeof f.sheets === 'object') {\n    return Object.entries(f.sheets)\n      .map(([sheetName, rows]) => sheetToText(sheetName, rows))\n      .join('\\n\\n');\n  }\n  return '';\n}\n\nlet extractedText = '';\nif (current.content?.parts) {\n  // \"Analyze document\" (Gemini) output\n  extractedText = current.content.parts.map(p => p.text || '').join('\\n');\n} else if (Array.isArray(current.files)) {\n  // \"Convert File to JSON\" output — handles both text-bearing files\n  // (docx/pdf) and spreadsheet files (xlsx/csv, which return `sheets`)\n  extractedText = current.files.map(fileToText).join('\\n\\n');\n}\n\nconst senderName = [msg.from.first_name, msg.from.last_name].filter(Boolean).join(' ');\nconst memberCaption = (msg.caption || '').trim();\nconst combinedText = memberCaption\n  ? `${senderName} : ${memberCaption} || The Document Text: \\n\\n${extractedText}`\n  : extractedText;\n\nreturn [{\n  json: {\n    chat_id: msg.chat.id,\n    thread_id: threadId,\n    message_id: msg.message_id,\n    sender_name: senderName,\n    username: msg.from.username || null,\n    created_at_gmt7: new Date(msg.date * 1000).toLocaleString('sv-SE', { timeZone: 'Asia/Jakarta' }),\n    reply_to_message_id: replyToMessageId,\n    document_id: msg.message_id,\n    file_name: msg.document.file_name,\n    blobType: msg.document.mime_type,\n    caption: memberCaption || null,\n    extracted_text: combinedText.trim()\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -400,
+        928
+      ],
+      "id": "1c611eca-6576-4232-9548-77e7bd118e0c",
+      "name": "Normalize Output"
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.embeddingsGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -112,
+        928
+      ],
+      "id": "85ae2aae-a851-4ff7-be2c-70c0e0d5fb80",
+      "name": "Embeddings Google Gemini",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "8hvw9GQPPFc4G9HD",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonMode": "expressionData",
+        "jsonData": "={{ $json.extracted_text }}",
+        "options": {
+          "metadata": {
+            "metadataValues": [
+              {
+                "name": "sender_name",
+                "value": "={{ $json.sender_name }}"
+              },
+              {
+                "name": "username",
+                "value": "={{ $json.username }}"
+              },
+              {
+                "name": "=chat_id",
+                "value": "={{ $json.chat_id }}"
+              },
+              {
+                "name": "message_id",
+                "value": "={{ $json.message_id }}"
+              },
+              {
+                "name": "thread_id",
+                "value": "={{ $json.thread_id || '' }}"
+              },
+              {
+                "name": "created_at_gmt7",
+                "value": "={{ $json.created_at_gmt7 }}"
+              },
+              {
+                "name": "reply_to_message_id",
+                "value": "={{ $json.reply_to_message_id }}"
+              },
+              {
+                "name": "user_id",
+                "value": "={{ $('Telegram Trigger').item.json.message.from.id }}"
+              },
+              {
+                "name": "source",
+                "value": "document"
+              }
+            ]
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1.1,
+      "position": [
+        32,
+        928
+      ],
+      "id": "9a6b1f8c-a49e-4bea-a649-8c2f3fc2e0f7",
+      "name": "Data Loader2"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "5c45855b-93ab-43a9-9f42-6d8d3562cfd9",
+              "leftValue": "={{ $json.finishReason }}",
+              "rightValue": "RECITATION",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -704,
+        912
+      ],
+      "id": "aef78962-61e2-4058-b2d4-c1518f00a797",
+      "name": "RECITATION?"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const fileName = $json.message.document.file_name;\nconst allowedExtensions = ['docx', 'xml', 'yml', 'xlsx', 'csv', 'pdf', 'txt', 'pptx', 'html'];\n\n// Extract extension (handles files without extension or lowercase/uppercase differences)\nconst extension = fileName.includes('.') ? fileName.split('.').pop().toLowerCase() : '';\n\n// Check if supported\nconst isSupported = allowedExtensions.includes(extension);\n\nreturn {\n  file_name: fileName,\n  extension: extension,\n  is_supported: isSupported\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1856,
+        752
+      ],
+      "id": "964a07f7-e6b8-4c9a-a0a7-b1e5fd6a6eab",
+      "name": "Check Extension"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "1a2be8c6-d639-4893-b638-3a667a251d60",
+              "leftValue": "={{ $json.is_supported }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -1680,
+        752
+      ],
+      "id": "67d7ad10-9436-46ee-aa24-f35362c3aaf8",
+      "name": "Supported?"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-3.1-flash-lite",
+          "mode": "list",
+          "cachedResultName": "models/gemini-3.1-flash-lite"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=### QUESTION: {{ $('Parse Question').item.json.question }}\n\n### ANSWER DATA: {{ $json.context }}\n\n### SOURCE LINK: {{ $json.sourceLinks }}\n\n### RESPONSE FORMAT:\n[direct and concise answer based on the context]"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {
+          "systemMessage": "=You are an intelligent Telegram Chat Assistant.\n\nCRITICAL LANGUAGE RULE: Detect the language of the User's Question (English or Bahasa Indonesia only — never any other language). Your ENTIRE reply must be written in that same language, from greeting to closing line, regardless of what language the retrieved context snippets are written in. Do not mix languages in one answer.\n\nExamples:\n- Question: \"shortcut to go to the next sheet in excel\" → respond entirely in English.\n- Question: \"cara pindah ke sheet berikutnya di excel\" → respond entirely in Bahasa Indonesia.\n\nYour job is to answer group chat inquiries based ONLY on the provided context retrieved from a vector database.\n\n### TASK\n1. Identify the core user question/inquiry (from the context, or from the query if passed separately).\n2. Read through the retrieved chat history / document snippets to summarize or directly answer the question.\n3. If specific details (e.g., pricing, reviews, explicit answers) are missing, synthesize what IS known (e.g., who sells it, open PO status, discussions) and state clearly what remains unanswered.\n4. Output the response in clean HTML suitable for Telegram's HTML parse mode.\n5. Before writing your final answer, confirm to yourself which language the User's Question is in, then write only in that language — do not let the language of the retrieved context influence your choice.\n\n### OUTPUT RULES — TELEGRAM HTML ONLY\n- Telegram's HTML parser supports ONLY these tags: <b>, <i>, <a href=\"...\">, <code>, <pre>. NO OTHER TAGS ARE ALLOWED, INCLUDING <ul>, <li>, <ol>, <p>, <div>, <br>, <h1>-<h6>, <span>, <table>. Using any of these will make the message fail to send.\n- For lists, do NOT use <ul>/<li>. Instead, write each item on its own line starting with '• ' (a bullet character), separated by newline characters.\n- Cite each source individually — never combine multiple numbers into one bracket (write [1] [2] [4], not [1, 2, 4]).\n- When you use information from a numbered source in the context, cite it immediately after the relevant sentence using its bracket number, e.g. [1]. Only cite numbers that were actually given to you in the context — never invent one that wasn't provided.\n- Do NOT wrap your output in markdown code fences like ```html ... ```.\n- Keep the tone conversational, friendly, and helpful.\n- Reference message authors by name when attributing statements or opinions."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        -48,
+        -992
+      ],
+      "id": "44364070-b01f-4e3f-b9a2-ea008fe34434",
+      "name": "Message a model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "8hvw9GQPPFc4G9HD",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nlet contextBlock = '';\nconst sourceLinks = {};\n\nitems.forEach((item, index) => {\n  const num = index + 1;\n  const meta = item.json.metadata || {};\n  const chatId = String(meta.chat_id || '').replace(/^-100/, '');\n  const messageId = meta.message_id;\n  const sender = meta.sender_name || meta.username || 'unknown';\n\n  contextBlock += `[${num}] ${sender}: ${item.json.content}\\n\\n`;\n\n  if (chatId && messageId) {\n    sourceLinks[num] = `https://t.me/c/${chatId}/${messageId}`;\n  }\n});\n\nreturn { json: { context: contextBlock, sourceLinks } };"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -224,
+        -992
+      ],
+      "id": "44305bcc-b4d1-4aca-9411-22df8474905d",
+      "name": "Get Source Link"
+    },
+    {
+      "parameters": {
+        "jsCode": "function sanitizeTelegramHtml(html) {\n  let out = html;\n  // Convert list markup to bullet lines, in case the model still emits it\n  out = out.replace(/<li[^>]*>/gi, '• ');\n  out = out.replace(/<\\/li>/gi, '\\n');\n  out = out.replace(/<\\/?(ul|ol)[^>]*>/gi, '');\n  // Common block-level tags become line breaks\n  out = out.replace(/<br\\s*\\/?>/gi, '\\n');\n  out = out.replace(/<\\/p>/gi, '\\n');\n  out = out.replace(/<p[^>]*>/gi, '');\n  out = out.replace(/<\\/?div[^>]*>/gi, '');\n  out = out.replace(/<\\/?(h[1-6]|span|table|tr|td|th|thead|tbody)[^>]*>/gi, '');\n  // Strip anything not in Telegram's actual whitelist\n  const allowed = ['b', 'strong', 'i', 'em', 'u', 'ins', 's', 'strike', 'del', 'a', 'code', 'pre', 'blockquote', 'tg-spoiler'];\n  out = out.replace(/<\\/?([a-zA-Z0-9-]+)([^>]*)>/g, (match, tag) => {\n    return allowed.includes(tag.toLowerCase()) ? match : '';\n  });\n  return out;\n}\n\nconst answer = $input.first().json.content.parts[0].text;\nconst sourceLinks = $('Get Source Link').first().json.sourceLinks;\n\nlet linkedAnswer = answer.replace(/\\[(\\d+)\\]/g, (match, num) => {\n  const url = sourceLinks[num];\n  return url ? `<a href=\"${url}\">[${num}]</a>` : match;\n});\n\nlinkedAnswer = sanitizeTelegramHtml(linkedAnswer);\n\nreturn { json: { ...$json, linkedAnswer } };"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        256,
+        -992
+      ],
+      "id": "9b1d0872-44bb-43c5-9a7c-536b61beb1ca",
+      "name": "Combine Source Link"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "={{ $json.linkedAnswer }}\n\n-----\n<i>AI-generated answers may be inaccurate.</i>",
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "HTML",
+          "reply_to_message_id": "={{ $('Telegram Trigger').item.json.message.message_id }}"
+        }
+      },
+      "id": "d33c60fe-698c-41c6-a169-27e9357674c9",
+      "name": "Send Answer",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        464,
+        -992
+      ],
+      "webhookId": "1d5e5834-058c-4ac4-ac80-e0a96152981c",
+      "credentials": {
+        "telegramApi": {
+          "id": "Gzt8GYCdmJAP19cR",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.message.animation.mime_type }}",
+                    "rightValue": "video",
+                    "operator": {
+                      "type": "string",
+                      "operation": "notContains"
+                    },
+                    "id": "53fe3383-91f2-4b85-aba8-8d69edd86e19"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "not video"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        -2016,
+        752
+      ],
+      "id": "1d75ff68-37fc-4eaa-a4fc-f7c33ea90b1e",
+      "name": "Not a Video"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.is_verified_payout }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              },
+              "id": "verified-payout-condition-004"
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -672,
+        208
+      ],
+      "id": "f3605d63-935b-40b4-a58a-3a4c638ff5c2",
+      "name": "Verified Payout?"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const trigger = $('Telegram Trigger').item.json.message;\nconst parsed = $json;\n\nconst category = parsed.Category || 'paid';\nconst label = {\n  paid: 'Verified payment',\n  pending: 'Pending payment',\n  bill_invoice: 'Invoice / bill'\n}[category] || 'Payment record';\n\nconst payingCompany = parsed.Paying_Company || '';\nconst amount = parsed.Amount || 'not specified';\nconst method = parsed.Payment_Method || '';\nconst date = parsed.Date || '';\nconst firstName = trigger.from.first_name || '';\nconst originalPost = `https://t.me/c/YOUR_GROUP_ID/${trigger.message_thread_id ?? 1}/${trigger.message_id}`;\n\nconst pageContent = `${label} — ${method ? 'Method: ' + method + ' | ' : ''}Amount: ${amount}${payingCompany ? ' | From: ' + payingCompany : ''}${date ? ' | Date: ' + date : ''} | Posted by: ${firstName}`;\n\nreturn {\n  json: {\n    pageContent,\n    metadata: {\n      source: 'payout_proof',\n      category,\n      chat_id: trigger.chat.id,\n      message_id: trigger.message_id,\n      thread_id: trigger.message_thread_id ?? null,\n      sender: firstName,\n      paying_company: payingCompany,\n      amount,\n      payment_method: method,\n      date,\n      original_post: originalPost,\n      timestamp: new Date(trigger.date * 1000).toISOString()\n    }\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -464,
+        96
+      ],
+      "id": "36fc64a4-2106-4f87-9ddb-4f2e47592cb8",
+      "name": "Build Payout Record"
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "operation": "analyze",
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-3.1-flash-lite",
+          "mode": "list",
+          "cachedResultName": "models/gemini-3.1-flash-lite"
+        },
+        "text": "=You are screening an image shared in a job/gig-work Telegram group to classify what kind of payment-related image it is, if any.\n\nMessage caption/text from the poster, if any (use ONLY to help identify a paying company or payment method not visible in the image itself — never invent one): \"{{ $('Telegram Trigger').item.json.message.caption ?? '' }}\"\n\n=== ONLY DIRECT PROOF COUNTS ===\nDirect proof is any of:\n(a) a screenshot of an actual payment/banking app or wallet showing the transaction itself,\n(b) an email or in-app receipt showing transaction details,\n(c) a payout/earnings notification sent DIRECTLY BY the platform or employer to the recipient — e.g. \"Your payout of $X is on its way\", a payslip-style email, an app notification stating an amount and status. This still counts as direct proof even if the same email/message ALSO contains unrelated marketing, referral-program, or cross-sell content (e.g. \"Earn more through referrals\", an \"Explore\" button) elsewhere in the message — ignore that marketing portion and extract only from the actual payout notice,\n(d) a bot-generated notification card from THIS group's own bot (headers like \"INVOICE / BILL\" or \"VERIFIED PAYMENT\").\n\nIf the image is instead a screenshot of a social media post, chat message, or forum thread that merely TALKS ABOUT or DISPLAYS a payment as part of a longer post — recognizable by social-platform UI chrome such as: an avatar + username + \"Follow\"/role-badge header, like/comment/share/bookmark counts, a post-age label (\"8h\", \"22h\", \"2d\"), a \"Translate\" option, \"View activity\", or nested reply/comment threads — this is a REPOST/TESTIMONIAL, not direct proof, even if it contains a visible amount, a \"successful\"/\"completed\" status, or persuasive claims about earnings. Set Category to \"not_payment\" in this case, regardless of what payment-looking content is embedded inside it.\n\n=== PRODUCT / COURSE LISTINGS ARE NOT PAYMENTS ===\nAn ad or storefront-style listing for a course, ebook, service, or product (price/currency badge next to a product title or thumbnail, \"buy now\"-style layout, with NO transaction status and NO invoice framing directed at a specific buyer) is NOT a payment screenshot — set Category to \"not_payment\" even though a price/currency amount is visible.\n\nSet Category to exactly one of:\n- \"paid\": a completed payout/transfer, shown as DIRECT proof (see above) — status wording like \"Completed\", \"Successful\", \"Sent\", \"Submitted\", \"Penarikan sukses\" all count.\n- \"pending\": a payout/payment shown as DIRECT proof that is scheduled, processing, in transit, or awaiting approval — not yet completed/arrived. Includes payout notification emails saying funds are \"on its way\" or \"should appear within X business days\".\n- \"bill_invoice\": an invoice, bill, or payment request shown as DIRECT proof — money owed, not money received. Includes course/product purchase cards explicitly framed as an invoice/bill.\n- \"not_payment\": the image isn't direct payment/financial proof — including product/course/service ads, storefront listings, and social-media/chat reposts or testimonials that merely display or discuss a payment.\n- \"other\": something payment-related that doesn't fit the above.\n\nRegardless of Category, extract whatever of the following is visible — don't leave fields empty just because Category isn't \"paid\":\n- Paying_Company: the employer, client, or company the money is coming FROM (or billed BY, for invoices), if named. Empty string if not shown.\n- Amount: the amount AND currency combined into one string, currency placed where it naturally belongs (e.g. \"USDC 99.34\", \"$1,XXX.XX\", \"USD X53.47\"). If digits are blurred/covered/blacked-out/scribbled, replace each hidden digit with X following normal digit grouping — a hidden group after a thousands comma is exactly 3 X's (e.g. \"$1,XXX\", never \"$1,X\"), a hidden cents group after a decimal point is exactly 2 X's (e.g. \"$1,XXX.XX\"). If the whole amount is hidden, write \"redacted\". Empty string only if no amount appears anywhere.\n- Date: a date/time that is part of the PAYMENT CONTENT itself — e.g. \"sent on...\", an issue date, a due date, a transaction timestamp inside the message or receipt body. Do NOT use timestamps from surrounding UI chrome that aren't part of the payment content — an email/inbox app's \"received at\" time, the phone's status bar clock, a notification badge time, a social post's \"Xh\" age label, etc. If the payment content itself doesn't state a date, leave this empty — don't substitute a nearby UI timestamp. The date format should look like 1 January 2026.\n- Payment_Method: whatever best identifies how/where the money moved or is billed through — a processor/app/bank name (Airtm, PayPal, Deel, Wise, a bank name) OR a generic method (Bank Transfer, Wire, Crypto) if no named service is shown. Use whichever is actually visible; don't guess a name that isn't there. If nothing is visible in the image, check the caption text above before leaving this empty.\n\nRespond with ONLY a single valid JSON object, no markdown, no code fences, no commentary, matching exactly:\n{\n  \"Category\": string,\n  \"Paying_Company\": string,\n  \"Amount\": string,\n  \"Date\": string,\n  \"Payment_Method\": string\n}",
+        "inputType": "binary",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [
+        -976,
+        208
+      ],
+      "id": "0d05efe9-1215-4939-bbbf-58775e7fa3c6",
+      "name": "Analyze Payout",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "8hvw9GQPPFc4G9HD",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Gemini's raw text can land on different fields depending on n8n/node version -\n// check the actual output in a test run and trim this fallback list down.\nlet raw = $json.content.parts[0].text\n  ?? $json.content\n  ?? $json.data\n  ?? $json.candidates?.[0]?.content?.parts?.[0]?.text\n  ?? '';\n\nraw = String(raw).replace(/```json|```/g, '').trim();\n\nlet parsed;\ntry {\n  parsed = JSON.parse(raw);\n} catch (e) {\n  parsed = {\n    Category: 'other',\n    Paying_Company: '',\n    Amount: '',\n    Date: '',\n    Payment_Method: ''\n  };\n}\n\nparsed.is_verified_payout = ['paid', 'bill_invoice', 'pending'].includes(parsed.Category);\n\nreturn { json: parsed };"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -832,
+        208
+      ],
+      "id": "f32a1bca-c262-4114-ac58-2b506d7d4aa4",
+      "name": "Parse Payout"
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.embeddingsGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -304,
+        432
+      ],
+      "id": "c7a9b568-696e-4ef9-b5d3-d79a8fb97178",
+      "name": "Embeddings (Payout)",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "8hvw9GQPPFc4G9HD",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonMode": "expressionData",
+        "jsonData": "={{ $json.pageContent }}",
+        "options": {
+          "metadata": {
+            "metadataValues": [
+              {
+                "name": "sender_name",
+                "value": "={{ $('Telegram Trigger').item.json.message.from.first_name }}"
+              },
+              {
+                "name": "username",
+                "value": "={{ $('Telegram Trigger').item.json.message.from.username || '' }}"
+              },
+              {
+                "name": "=chat_id",
+                "value": "={{ $('Telegram Trigger').item.json.message.chat.id }}"
+              },
+              {
+                "name": "message_id",
+                "value": "={{ $('Telegram Trigger').item.json.message.message_id }}"
+              },
+              {
+                "name": "thread_id",
+                "value": "={{ $('Telegram Trigger').item.json.message.message_thread_id || '' }}"
+              },
+              {
+                "name": "created_at_gmt7",
+                "value": "={{ DateTime.fromSeconds($('Telegram Trigger').item.json.message.date).setZone('Asia/Jakarta').toFormat('yyyy-MM-dd HH:mm:ss') }}"
+              },
+              {
+                "name": "reply_to_message_id",
+                "value": "={{ $('Telegram Trigger').item.json.message.reply_to_message.message_id }}"
+              },
+              {
+                "name": "source",
+                "value": "={{ $json.metadata.source }}"
+              },
+              {
+                "name": "user_id",
+                "value": "={{ $('Telegram Trigger').item.json.message.from.id }}"
+              }
+            ]
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1.1,
+      "position": [
+        -176,
+        432
+      ],
+      "id": "ed09ee9d-8e29-40ca-9a62-a809e012a489",
+      "name": "Data Loader3"
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "fileId": "={{ $('Telegram Trigger').item.json.message.photo.last().file_id }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -1136,
+        208
+      ],
+      "id": "91b789e9-9e63-44f0-8707-07a74d34dc2b",
+      "name": "Get Photo File",
+      "webhookId": "REPLACE_ME_WEBHOOK_ID",
+      "credentials": {
+        "telegramApi": {
+          "id": "Gzt8GYCdmJAP19cR",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const trigger = $('Telegram Trigger').item.json.message;\nconst output = $json.output;\n\nconst role = output.Role || 'Unknown role';\nconst platform = output.Platform || '';\nconst link = output.Link || '';\nconst rate = output.Rate || 'not specified';\nconst description = output.Job_Description || '';\nconst firstName = trigger.from.first_name || output.Posted_By_First_Name || '';\nconst originalPost = `https://t.me/c/YOUR_GROUP_ID/${trigger.message_thread_id ?? 1}/${trigger.message_id}`;\n\nconst pageContent = `Job opening — Role: ${role}${platform ? ' | Platform: ' + platform : ''} | Rate: ${rate}\\n${description}${link ? '\\nLink: ' + link : ''}\\nPosted by: ${firstName}`;\n\nreturn {\n  json: {\n    pageContent,\n    metadata: {\n      source: 'job_posting',\n      chat_id: trigger.chat.id,\n      message_id: trigger.message_id,\n      thread_id: trigger.message_thread_id ?? null,\n      sender: firstName,\n      role,\n      platform,\n      rate,\n      link,\n      original_post: originalPost,\n      timestamp: new Date(trigger.date * 1000).toISOString()\n    }\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -320,
+        -304
+      ],
+      "id": "514099fa-37b3-4de9-babe-bcb6c2167d5b",
+      "name": "Job Opening Record"
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.embeddingsGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -160,
+        -128
+      ],
+      "id": "07f703ff-9a67-4102-86b6-c6d87182aeea",
+      "name": "Embeddings (Payout)1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "8hvw9GQPPFc4G9HD",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonMode": "expressionData",
+        "jsonData": "={{ $json.pageContent }}",
+        "options": {
+          "metadata": {
+            "metadataValues": [
+              {
+                "name": "sender_name",
+                "value": "={{ $('Telegram Trigger').item.json.message.from.first_name }}"
+              },
+              {
+                "name": "username",
+                "value": "={{ $('Telegram Trigger').item.json.message.from.username || '' }}"
+              },
+              {
+                "name": "=chat_id",
+                "value": "={{ $('Telegram Trigger').item.json.message.chat.id }}"
+              },
+              {
+                "name": "message_id",
+                "value": "={{ $('Telegram Trigger').item.json.message.message_id }}"
+              },
+              {
+                "name": "thread_id",
+                "value": "={{ $('Telegram Trigger').item.json.message.message_thread_id || '' }}"
+              },
+              {
+                "name": "created_at_gmt7",
+                "value": "={{ DateTime.fromSeconds($('Telegram Trigger').item.json.message.date).setZone('Asia/Jakarta').toFormat('yyyy-MM-dd HH:mm:ss') }}"
+              },
+              {
+                "name": "reply_to_message_id",
+                "value": "={{ $('Telegram Trigger').item.json.message.reply_to_message.message_id }}"
+              },
+              {
+                "name": "source",
+                "value": "={{ $json.metadata.source }}"
+              },
+              {
+                "name": "user_id",
+                "value": "={{ $('Telegram Trigger').item.json.message.from.id }}"
+              }
+            ]
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1.1,
+      "position": [
+        -16,
+        -128
+      ],
+      "id": "350bedf2-9191-4104-862e-4e76e979078b",
+      "name": "Data Loader4"
+    },
+    {
+      "parameters": {
+        "jsCode": "const stopwords = new Set([\n  'yang','dari','siapa','apa','ke','di','dan','atau','ini','itu','untuk',\n  'dengan','saja','aja','dong','sih','ya','nya','adalah','akan','bisa',\n  'ada','tersebut','pada','juga','saat','kapan','berapa','bagaimana',\n  'who','what','where','when','is','are','the','a','an','from','of',\n  'in','on','to','for','and','or','how','much','many','does','did','ask'\n]);\n\nconst question = ($json.query || '').toLowerCase();\n\nconst tokens = question.match(/\\d+(\\.\\d+)?|[a-z]+/g) || [];\nconst keywords = tokens.filter(w => w.length >= 3 && !stopwords.has(w));\n\nconst keywordPattern = keywords.join(' | ');\n\nreturn { json: { ...$json, keywordPattern } };"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -592,
+        -976
+      ],
+      "id": "e3330139-a0ec-43f3-968e-312204222f6d",
+      "name": "Extract Keywords"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks",
+              "triggerAtHour": 18,
+              "triggerAtMinute": 5
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -2720,
+        -720
+      ],
+      "id": "37c27482-50f8-4791-9339-29512fb53070",
+      "name": "Weekly Schedule"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 6
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -2720,
+        -960
+      ],
+      "id": "bbd0803d-a15b-4f8e-9ad7-6da39e52e7e9",
+      "name": "Daily Schedule"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "models/gemini-3.1-flash-lite"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Analyze yesterday's chat logs and generate a friendly, concise daily digest post using format below. \n\nChat logs for yesterday:\n{{ $json.messages }}\n\nPlease structure the response exactly using this clean format:\n\n☀️ <b>DAILY RECAP</b> ☀️ \n\n<i>Insight penting dari member sepanjang hari kemarin ({{ $today.minus({ days: 1 }).toFormat('cccc, dd LLLL yyyy') }})</i>\n\n🚨 <b>PROJECT UPDATES</b> 🚨\n• <b>[Nama Project/Platform 1]:</b> [Rangkuman 1 kalimat tentang update, rate, atau kendala]\n• <b>[Nama Project/Platform 2]:</b> [Rangkuman 1 kalimat tentang update, rate, atau kendala]\n• <b>[Nama Project/Platform 3]:</b> [Rangkuman 1 kalimat tentang update, rate, atau kendala]\n• <b>[Nama Project/Platform 4]:</b> [Rangkuman 1 kalimat tentang update, rate, atau kendala]\n• <b>[Nama Project/Platform 5]:</b> [Rangkuman 1 kalimat tentang update, rate, atau kendala]\n\n💼 <b>JOB OPENING</b> 💼\n[Rangkum informasi lowongan kerja, project baru, data annotation, atau kesempatan remote work yang dibagikan atau ramai didiskusikan kemarin. Jika tidak ada info lowongan baru, tulis \"Belum ada info lowongan baru kemarin.\"]\n\n🛠️ <b>QUICK FIX & TIPS</b> 🛠️\n• <b>[Kendala]:</b> [Solusi ringkas yang berhasil dicoba anggota kemarin, maks 1 kalimat]\n\n💰 <b>FINANCIAL</b> 💰\n[Kabar seputar withdraw/rate/kurs jika ada, jika tidak ada tulis \"Tidak ada bahasan finansial kemarin.\"]\n\n☕ <b>POJOK SANTAI</b> ☕\n• [Rangkum obrolan santai di grup dalam beberapa point]\n\n💬 <b>Top Active Channels</b>\n1. {{ $json.top_threads[0].thread_name }} ({{ $json.top_threads[0].message_count }} msg)\n2. {{ $json.top_threads[1].thread_name }} ({{ $json.top_threads[1].message_count }} msg)\n3. {{ $json.top_threads[2].thread_name }} ({{ $json.top_threads[2].message_count }} msg)\n\n🏆 <b>Top Active Members</b>\n1. {{ $json.top_members[0].first_name }} ({{ $json.top_members[0].message_count }} msg)\n2. {{ $json.top_members[1].first_name }} ({{ $json.top_members[1].message_count }} msg)\n3. {{ $json.top_members[2].first_name }} ({{ $json.top_members[2].message_count }} msg)\n\n👤<b>Total Active Members:</b> {{ $json.active_members }} members\n\n<i>[1 kalimat singkat penyemangat hari ini, pakai emoji juga ya]</i>"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {
+          "systemMessage": "You are a community manager. Analyze yesterday's chat logs and generate a friendly, concise daily digest post using the provided format. Focus on key discussions and shared insights. \n\nCRITICAL CONSTRAINTS:\n- Do NOT include, mention, or reference any topics related to religion, ethnicity, or tribal groups (SARA) in the summary under any circumstances. Keep the focus entirely professional, lighthearted, and community-centric.\n- Output the final response EXCLUSIVELY using Telegram-compatible HTML tags instead of Markdown (use <b> for bold, <i> for italics, etc.).\n- Do not use asterisks (*) or markdown formatting anywhere in the output. For English terms, loanwords, or technical terms, you MUST wrap them inside <i>italic HTML tags</i> instead of asterisks.\n- Keep the entire summary strict, concise, and under 4,000 characters so it fits comfortably within Telegram's message limits.\n- Use emojis when needed.\n- Do not mention about new member introductions\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        -2224,
+        -960
+      ],
+      "id": "3d17b9a1-b918-4a2c-bafd-25be4cd4d600",
+      "name": "Create Daily Recap",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "8hvw9GQPPFc4G9HD",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-3.1-flash-lite",
+          "mode": "list",
+          "cachedResultName": "models/gemini-3.1-flash-lite"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Analyze last week's chat logs and generate a friendly, concise weekly digest post using format below. \n\nLast Week Chat logs:\n{{ $json.messages }}\n\nStructure the response exactly using this clean format:\n\n🚀 <b>WEEKLY RECAP</b> 🚀\n<i>Insight penting dari member selama seminggu terakhir!</i>\n\n🔥 <b>HOT TOPICS & PROJECTS</b> 🔥\n• <b>[Nama Project/Platform 1]:</b> [Rangkuman 1 kalimat tentang update, rate, atau kendala]\n• <b>[Nama Project/Platform 2]:</b> [Rangkuman 1 kalimat tentang update, rate, atau kendala]\n• <b>[Nama Project/Platform 3]:</b> [Rangkuman 1 kalimat tentang update, rate, atau kendala]\n• <b>[Nama Project/Platform 4]:</b> [Rangkuman 1 kalimat tentang update, rate, atau kendala]\n• <b>[Nama Project/Platform 5]:</b> [Rangkuman 1 kalimat tentang update, rate, atau kendala]\n\n💡 <b>SHARED INSIGHTS & TIPS</b> 💡\n• <b>[Topik Tips 1]:</b> [Tips singkat dari diskusi grup, 1 kalimat]\n• <b>[Topik Tips 2]:</b> [Tips singkat dari diskusi grup, 1 kalimat]\n• <b>[Topik Tips 3]:</b> [Tips singkat dari diskusi grup, 1 kalimat]\n• <b>[Topik Tips 4]:</b> [Tips singkat dari diskusi grup, 1 kalimat]\n• <b>[Topik Tips 5]:</b> [Tips singkat dari diskusi grup, 1 kalimat]\n\n💰 <b>FINANCIAL</b> 💰\n• [Rangkuman singkat jika ada bahasan gajian, rate, withdraw, PayPal, atau kurs bank, maks 1 kalimat]\n• [Rangkuman singkat jika ada bahasan gajian, rate, withdraw, PayPal, atau kurs bank, maks 1 kalimat]\n• [Rangkuman singkat jika ada bahasan gajian, rate, withdraw, PayPal, atau kurs bank, maks 1 kalimat]\n\n💬 <b>Top Active Channels</b>\n1. {{ $json.top_threads[0].thread_name }} ({{ $json.top_threads[0].message_count }} msg)\n2. {{ $json.top_threads[1].thread_name }} ({{ $json.top_threads[1].message_count }} msg)\n3. {{ $json.top_threads[2].thread_name }} ({{ $json.top_threads[2].message_count }} msg)\n4. {{ $json.top_threads[3].thread_name }} ({{ $json.top_threads[3].message_count }} msg)\n5. {{ $json.top_threads[4].thread_name }} ({{ $json.top_threads[4].message_count }} msg)\n\n🏆 <b>Top Active Members</b>\n1. {{ $json.top_members[0].first_name }} ({{ $json.top_members[0].message_count }} msg)\n2. {{ $json.top_members[1].first_name }} ({{ $json.top_members[1].message_count }} msg)\n3. {{ $json.top_members[2].first_name }} ({{ $json.top_members[2].message_count }} msg)\n4. {{ $json.top_members[3].first_name }} ({{ $json.top_members[3].message_count }} msg)\n5. {{ $json.top_members[4].first_name }} ({{ $json.top_members[4].message_count }} msg)\n\n👤<b>Total Active Members:</b> {{ $json.active_members }} members\n\n\"<i>[an inspiring, uplifting, and motivational quote that encourages the community members in their daily endeavors and hustle, 1 sentence]</i>\"\n"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {
+          "systemMessage": "You are a community manager. Analyze yesterday's chat logs and generate a friendly, concise daily digest post using the provided format. Focus on key discussions and shared insights. \n\nCRITICAL CONSTRAINTS:\n- Do NOT include, mention, or reference any topics related to religion, ethnicity, or tribal groups (SARA) in the summary under any circumstances. Keep the focus entirely professional, lighthearted, and community-centric.\n- Output the final response EXCLUSIVELY using Telegram-compatible HTML tags instead of Markdown (use <b> for bold, <i> for italics, etc.).\n- Do not use asterisks (*) or markdown formatting anywhere in the output. For English terms, loanwords, or technical terms, you MUST wrap them inside <i>italic HTML tags</i> instead of asterisks.\n- Keep the entire summary strict, concise, and under 4,000 characters so it fits comfortably within Telegram's message limits.\n- Use emojis when needed.\n- Do not mention about new member introductions\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        -2224,
+        -720
+      ],
+      "id": "e2b82483-955b-4839-aa0a-2efd2234879f",
+      "name": "Create Weekly Recap",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "8hvw9GQPPFc4G9HD",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "YOUR_GROUP_CHAT_ID",
+        "text": "={{ $json.content.parts[0].text }}",
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "HTML",
+          "message_thread_id": "DAILY_WEEKLY_RECAP_THREAD_ID"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -1872,
+        -960
+      ],
+      "id": "d194454a-8695-42de-91c4-f43f23cfe907",
+      "name": "Send Daily Recap",
+      "webhookId": "f557b179-639b-42a4-aca9-3d47b72b0c2f",
+      "credentials": {
+        "telegramApi": {
+          "id": "Gzt8GYCdmJAP19cR",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "YOUR_GROUP_CHAT_ID",
+        "text": "={{ $json.content.parts[0].text }}",
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "HTML",
+          "message_thread_id": "DAILY_WEEKLY_RECAP_THREAD_ID"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -1872,
+        -720
+      ],
+      "id": "813b62a5-0a4a-45ed-a7bb-7d46906af6bc",
+      "name": "Send Weekly Recap",
+      "webhookId": "f557b179-639b-42a4-aca9-3d47b72b0c2f",
+      "credentials": {
+        "telegramApi": {
+          "id": "Gzt8GYCdmJAP19cR",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "WITH day_messages_raw AS (\n  SELECT id, created_at, content, metadata\n  FROM public.telegram_knowledge\n  WHERE (metadata->>'created_at_gmt7')::timestamp >= (date_trunc('day', now() AT TIME ZONE 'Asia/Jakarta') - INTERVAL '1 day')\n    AND (metadata->>'created_at_gmt7')::timestamp <  date_trunc('day', now() AT TIME ZONE 'Asia/Jakarta')\n    AND metadata->>'chat_id' = 'YOUR_GROUP_CHAT_ID'   -- <-- filter to the target chat/group\n),\nday_messages AS (\n  -- collapse multi-chunk blob rows (same source message, split into pieces by the\n  -- text splitter) into ONE row per message, keeping the earliest chunk as representative\n  SELECT DISTINCT ON (COALESCE(metadata->>'message_id', id::text))\n    id, created_at, content, metadata\n  FROM day_messages_raw\n  ORDER BY\n    COALESCE(metadata->>'message_id', id::text),\n    COALESCE((metadata->'loc'->'lines'->>'from')::int, 0) ASC,\n    created_at ASC\n),\nthread_names(thread_id, thread_name) AS (\n  VALUES\n    (SCAMMER_THREAD_ID, 'Scammer'), (CROWDGEN_THREAD_ID, 'Crowdgen'), (MERCOR_THREAD_ID, 'Mercor'),\n    (JOB_OPENING_THREAD_ID, 'Job Opening'), (ONGOING_PROJECT_THREAD_ID, 'Ongoing Project'), (TELUS_THREAD_ID, 'Telus'),\n    (INCOGNITO_THREAD_ID, 'Incognito'), (RWS_THREAD_ID, 'RWS'), (WELO_THREAD_ID, 'Welo'),\n    (ONEFORMA_THREAD_ID, 'OneForma'), (VERIFIED_PAYOUT_THREAD_ID, 'Verified Payout'), (IMERIT_THREAD_ID, 'iMerit'),\n    (PROLIFIC_THREAD_ID, 'Prolific'), (PAIR_RECORDING_THREAD_ID, 'Pair Recording Indo'), (INVISIBLE_THREAD_ID, 'Invisible'),\n    (CODING_CLASS_THREAD_ID, 'Coding Class'), (ENGLISH_CLASS_THREAD_ID, 'English Class'), (DATAANNOTATION_THREAD_ID, 'DataAnnotation'),\n    (TMAXXX_THREAD_ID, 'TMaxxx'), (OUTLIER_THREAD_ID, 'Outlier'), (TIPS_TRICKS_THREAD_ID, 'Tips & Tricks'), (BABEL_AUDIO_THREAD_ID, 'Babel Audio')\n),\nthread_counts AS (\n  SELECT metadata->>'thread_id' AS thread_id, COUNT(*) AS message_count\n  FROM day_messages\n  WHERE metadata->>'thread_id' IS NOT NULL AND metadata->>'thread_id' <> ''\n  GROUP BY metadata->>'thread_id'\n),\ntop_threads AS (\n  SELECT tc.thread_id,\n         COALESCE(tn.thread_name, tc.thread_id) AS thread_name,\n         tc.message_count\n  FROM thread_counts tc\n  LEFT JOIN thread_names tn ON tn.thread_id = tc.thread_id::bigint\n  ORDER BY tc.message_count DESC\n  LIMIT 3\n),\ntop_members AS (\n  SELECT split_part(COALESCE(metadata->>'sender_name', metadata->>'username'), ' ', 1) AS first_name,\n         COUNT(*) AS message_count\n  FROM day_messages\n  GROUP BY 1\n  ORDER BY message_count DESC\n  LIMIT 3\n)\nSELECT\n  (\n    SELECT COUNT(DISTINCT COALESCE(dm.metadata->>'sender_name', dm.metadata->>'username'))\n    FROM day_messages dm\n  ) AS active_members,\n  (\n    SELECT string_agg(\n      format('%s: %s',\n        COALESCE(dm.metadata->>'sender_name', dm.metadata->>'username', 'unknown'),\n        dm.content\n      ),\n      E'\\n' ORDER BY (dm.metadata->>'created_at_gmt7')::timestamp\n    )\n    FROM day_messages dm\n  ) AS messages,\n  (SELECT json_agg(row_to_json(top_threads)) FROM top_threads) AS top_threads,\n  (SELECT json_agg(row_to_json(top_members)) FROM top_members) AS top_members;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        -2464,
+        -960
+      ],
+      "id": "1ceb2bd9-4ac1-4cf6-ad6c-6c80618c8071",
+      "name": "Get Daily Recap",
+      "credentials": {
+        "postgres": {
+          "id": "6WUwV5V3NE7UTeBm",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "WITH week_messages_raw AS (\n  SELECT id, created_at, content, metadata\n  FROM public.telegram_knowledge\n  WHERE (metadata->>'created_at_gmt7')::timestamp >= date_trunc('week', now() AT TIME ZONE 'Asia/Jakarta')\n    AND (metadata->>'created_at_gmt7')::timestamp <  date_trunc('week', now() AT TIME ZONE 'Asia/Jakarta') + INTERVAL '7 days'\n    AND metadata->>'chat_id' = 'YOUR_GROUP_CHAT_ID'   -- <-- filter to the target chat/group\n),\nweek_messages AS (\n  -- collapse multi-chunk blob rows (same source message, split into pieces by the\n  -- text splitter) into ONE row per message, keeping the earliest chunk as representative\n  SELECT DISTINCT ON (COALESCE(metadata->>'message_id', id::text))\n    id, created_at, content, metadata\n  FROM week_messages_raw\n  ORDER BY\n    COALESCE(metadata->>'message_id', id::text),\n    COALESCE((metadata->'loc'->'lines'->>'from')::int, 0) ASC,\n    created_at ASC\n),\nthread_names(thread_id, thread_name) AS (\n  VALUES\n    (SCAMMER_THREAD_ID, 'Scammer'), (CROWDGEN_THREAD_ID, 'Crowdgen'), (MERCOR_THREAD_ID, 'Mercor'),\n    (JOB_OPENING_THREAD_ID, 'Job Opening'), (ONGOING_PROJECT_THREAD_ID, 'Ongoing Project'), (TELUS_THREAD_ID, 'Telus'),\n    (INCOGNITO_THREAD_ID, 'Incognito'), (RWS_THREAD_ID, 'RWS'), (WELO_THREAD_ID, 'Welo'),\n    (ONEFORMA_THREAD_ID, 'OneForma'), (VERIFIED_PAYOUT_THREAD_ID, 'Verified Payout'), (IMERIT_THREAD_ID, 'iMerit'),\n    (PROLIFIC_THREAD_ID, 'Prolific'), (PAIR_RECORDING_THREAD_ID, 'Pair Recording Indo'), (INVISIBLE_THREAD_ID, 'Invisible'),\n    (CODING_CLASS_THREAD_ID, 'Coding Class'), (ENGLISH_CLASS_THREAD_ID, 'English Class'), (DATAANNOTATION_THREAD_ID, 'DataAnnotation'),\n    (TMAXXX_THREAD_ID, 'TMaxxx'), (OUTLIER_THREAD_ID, 'Outlier'), (TIPS_TRICKS_THREAD_ID, 'Tips & Tricks'), (BABEL_AUDIO_THREAD_ID, 'Babel Audio')\n),\nthread_counts AS (\n  SELECT metadata->>'thread_id' AS thread_id, COUNT(*) AS message_count\n  FROM week_messages\n  WHERE metadata->>'thread_id' IS NOT NULL AND metadata->>'thread_id' <> ''\n  GROUP BY metadata->>'thread_id'\n),\ntop_threads AS (\n  SELECT tc.thread_id,\n         COALESCE(tn.thread_name, tc.thread_id) AS thread_name,\n         tc.message_count\n  FROM thread_counts tc\n  LEFT JOIN thread_names tn ON tn.thread_id = tc.thread_id::bigint\n  ORDER BY tc.message_count DESC\n  LIMIT 5\n),\ntop_members AS (\n  SELECT split_part(COALESCE(metadata->>'sender_name', metadata->>'username'), ' ', 1) AS first_name,\n         COUNT(*) AS message_count\n  FROM week_messages\n  GROUP BY 1\n  ORDER BY message_count DESC\n  LIMIT 5\n)\nSELECT\n  (\n    SELECT COUNT(DISTINCT COALESCE(wm.metadata->>'sender_name', wm.metadata->>'username'))\n    FROM week_messages wm\n  ) AS active_members,\n  (SELECT json_agg(row_to_json(week_messages)) FROM week_messages) AS messages,\n  (SELECT json_agg(row_to_json(top_threads))   FROM top_threads)   AS top_threads,\n  (SELECT json_agg(row_to_json(top_members))   FROM top_members)   AS top_members;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        -2464,
+        -720
+      ],
+      "id": "4360ee5c-fbff-4d33-ac09-991bddf4365b",
+      "name": "Get Weekly Recap",
+      "credentials": {
+        "postgres": {
+          "id": "6WUwV5V3NE7UTeBm",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "fileId": "={{ $('Telegram Trigger').item.json.message.photo.last().file_id }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        48,
+        272
+      ],
+      "id": "814e9690-06dd-4842-8c54-eff42bf6d99c",
+      "name": "Get Photo File1",
+      "webhookId": "REPLACE_ME_WEBHOOK_ID",
+      "credentials": {
+        "telegramApi": {
+          "id": "Gzt8GYCdmJAP19cR",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "189778c3-222c-4213-a665-43e5bfc33054",
+              "leftValue": "={{ $json.isSearchable }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -928,
+        480
+      ],
+      "id": "d22cb235-6e43-4ec2-b77b-678644135693",
+      "name": "isSearchable"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Process every item in the input batch\nreturn $input.all().map(item => {\n  // Grab raw text buffer from binary data 'data'\n  const binaryData = item.binary?.data?.data \n    ? Buffer.from(item.binary.data.data, 'base64') \n    : Buffer.from('');\n\n  // Extract raw ASCII string\n  const rawText = binaryData.toString('utf-8');\n\n  // Strip non-printable control characters\n  const cleanText = rawText.replace(/[^\\x20-\\x7E\\n\\r]/g, '');\n\n  return {\n    json: {\n      ...item.json,\n      extractedText: cleanText,\n      // Check if text length is greater than 50 characters\n      isSearchable: cleanText.trim().length > 10\n    },\n    // Retain binary property so downstream nodes can still use the file if needed\n    binary: item.binary\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1120,
+        480
+      ],
+      "id": "9d415126-945e-40f9-b473-5a0a5fe7f164",
+      "name": "Is Searchable?"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "402f00d4-c9d9-4c02-8fa5-c7a91d3fbfce",
+              "leftValue": "={{ $json.message?.new_chat_members?.length > 0 }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "38e707aa-4ceb-4613-81d0-c0e165663fc6",
+      "name": "Is New Member Event",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -2224,
+        1264
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c0f75fac-7ff0-47a0-95b7-31cebd65d7ca",
+              "leftValue": "={{ $json.callback_query?.data?.startsWith('v:') }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "3939c9b0-736f-448a-9a56-2b66ba81856b",
+      "name": "Is Verify Callback",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -2000,
+        1424
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "cefb97a5-e86a-4a7e-8816-70e2416c6640",
+      "name": "Ignore Other Updates",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        -1808,
+        1568
+      ]
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "message.new_chat_members",
+        "options": {}
+      },
+      "id": "874a0637-5339-4cbd-a7cb-63f6ab99a106",
+      "name": "Split New Members",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        -1984,
+        1200
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const options = [2,3,4,5,6,7,8,9].sort(() => Math.random() - 0.5).slice(0, 4);\nconst correctIndex = Math.floor(Math.random() * 4);\nconst chatId = $('Telegram Trigger').item.json.message.chat.id;\nconst userId = $json.id;\nconst firstName = $json.first_name || 'there';\nconst escapeHtml = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');\nconst mention = `<b><a href=\"tg://user?id=${userId}\">@${escapeHtml(firstName)}</a></b>`;\n\nconst keyboard = {\n  inline_keyboard: [ options.map((n, i) => ({ text: String(n), callback_data: `v:${userId}:${i}` })) ]\n};\n\nreturn {\n  json: {\n    chatId,\n    userId,\n    firstName,\n    correctIndex,\n    keyboard,\n    promptText: `Welcome ${mention}! Tap <b>${options[correctIndex]}</b> within 5 minutes to unlock the group. You have 3 attempts.`\n  }\n};"
+      },
+      "id": "b18dd183-5d5b-4da1-af2d-2f261022001b",
+      "name": "Build Challenge",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1808,
+        1200
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.telegram.org/bot{{ $env.TELEGRAM_BOT_TOKEN }}/restrictChatMember",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  chat_id: $json.chatId,\n  user_id: $json.userId,\n  permissions: {\n    can_send_messages: false,\n    can_send_photos: false,\n    can_send_videos: false,\n    can_send_other_messages: false,\n    can_add_web_page_previews: false,\n    can_invite_users: false\n  }\n}) }}",
+        "options": {}
+      },
+      "id": "097d0fa9-9e65-43df-b9dd-9f1f73f624e0",
+      "name": "Restrict New Member",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1632,
+        1200
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.telegram.org/bot{{ $env.TELEGRAM_BOT_TOKEN }}/sendMessage",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  chat_id: $('Build Challenge').item.json.chatId,\n  message_thread_id: 'VERIFICATION_THREAD_ID',\n  text: $('Build Challenge').item.json.promptText,\n  parse_mode: 'HTML',\n  reply_markup: $('Build Challenge').item.json.keyboard\n}) }}",
+        "options": {}
+      },
+      "id": "88fccad0-b7c2-439f-bbff-0bfbff68ea68",
+      "name": "Send Challenge",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1408,
+        1200
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const sendResult = $json.result;\nconst build = $('Build Challenge').item.json;\nconst deadline = new Date(Date.now() + 5 * 60 * 1000).toISOString();\n\nreturn {\n  json: {\n    chatId: build.chatId,\n    userId: build.userId,\n    messageId: sendResult.message_id,\n    correctIndex: build.correctIndex,\n    deadline\n  }\n};"
+      },
+      "id": "03de26ef-f0f0-4520-bf82-fc33679d2b61",
+      "name": "Prepare DB Row",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1232,
+        1200
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO pending_verifications (chat_id, user_id, message_id, correct_index, deadline)\nVALUES ({{ $json.chatId }}, {{ $json.userId }}, {{ $json.messageId }}, {{ $json.correctIndex }}, '{{ $json.deadline }}')\nON CONFLICT (chat_id, user_id) DO UPDATE SET\n  message_id = EXCLUDED.message_id,\n  correct_index = EXCLUDED.correct_index,\n  attempts = 0,\n  deadline = EXCLUDED.deadline;",
+        "options": {}
+      },
+      "id": "dc865e72-4b09-409c-9656-95d618ba781e",
+      "name": "Insert Pending Verification",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        -1072,
+        1200
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "6WUwV5V3NE7UTeBm",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const cq = $json.callback_query;\nconst parts = (cq.data || '').split(':');\n\nreturn {\n  json: {\n    chatId: cq.message.chat.id,\n    messageId: cq.message.message_id,\n    callbackQueryId: cq.id,\n    clickerId: cq.from.id,\n    targetFirstName: cq.from.first_name || 'Member',\n    targetUserId: Number(parts[1]),\n    choiceIndex: Number(parts[2])\n  }\n};"
+      },
+      "id": "f73aee0c-6d69-4ab5-b217-c12a0a53425b",
+      "name": "Parse Callback",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1808,
+        1408
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "69bedf3f-5377-4233-a1ce-86964f315447",
+              "leftValue": "={{ $json.clickerId }}",
+              "rightValue": "={{ $json.targetUserId }}",
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "4db2a91f-672b-4e31-83d8-77d54e613776",
+      "name": "Is Own Verification",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -1632,
+        1408
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.telegram.org/bot{{ $env.TELEGRAM_BOT_TOKEN }}/answerCallbackQuery",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  callback_query_id: $json.callbackQueryId,\n  text: \"This isn't your verification\",\n  show_alert: true\n}) }}",
+        "options": {}
+      },
+      "id": "572810e6-73ce-450a-badb-065c6a7100d3",
+      "name": "Answer Not Yours",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1408,
+        1568
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT to_jsonb(pv) AS row, (pv.id IS NOT NULL) AS found\nFROM (SELECT 1) d\nLEFT JOIN pending_verifications pv\n  ON pv.chat_id = {{ $json.chatId }} AND pv.user_id = {{ $json.targetUserId }};",
+        "options": {}
+      },
+      "id": "79ceb5b2-a5af-4f18-958a-7d79ad1ff6e3",
+      "name": "Get Pending Row",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        -1408,
+        1392
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "6WUwV5V3NE7UTeBm",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const cb = $('Parse Callback').item.json;\nconst row = $json.row;\n\nreturn {\n  json: {\n    ...cb,\n    found: $json.found,\n    dbMessageId: row ? row.message_id : null,\n    correctIndex: row ? row.correct_index : null,\n    attempts: row ? row.attempts : null\n  }\n};"
+      },
+      "id": "6acc7622-0530-4dbb-8681-862264c63685",
+      "name": "Merge Callback And Row",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1216,
+        1392
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 1
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "4fe1ddd9-fc11-4fe3-b2d8-71f8ee238fe9",
+              "leftValue": "={{ $json.found }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "52682280-94ba-4e05-9cfd-83d63ff04ed2",
+      "name": "Row Found",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -1040,
+        1392
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.telegram.org/bot{{ $env.TELEGRAM_BOT_TOKEN }}/answerCallbackQuery",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  callback_query_id: $json.callbackQueryId,\n  text: 'This challenge is no longer active',\n  show_alert: true\n}) }}",
+        "options": {}
+      },
+      "id": "1580f653-a551-4356-ade2-b9328846aaf3",
+      "name": "Answer Expired",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -832,
+        1488
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 1
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "405c576e-d9b0-450c-b6dd-9522062ada51",
+              "leftValue": "={{ $json.choiceIndex }}",
+              "rightValue": "={{ $json.correctIndex }}",
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "517a6841-f763-4209-9e65-35984d89d78f",
+      "name": "Is Correct",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -832,
+        1312
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.telegram.org/bot{{ $env.TELEGRAM_BOT_TOKEN }}/restrictChatMember",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  chat_id: $json.chatId,\n  user_id: $json.targetUserId,\n  permissions: {\n    can_send_messages: true,\n    can_send_photos: true,\n    can_send_videos: true,\n    can_send_other_messages: true,\n    can_add_web_page_previews: true,\n    can_invite_users: true\n  }\n}) }}",
+        "options": {}
+      },
+      "id": "902cd1f2-cc34-4fe7-9096-8b08f9626fca",
+      "name": "Unrestrict Member",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -592,
+        1168
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.telegram.org/bot{{ $env.TELEGRAM_BOT_TOKEN }}/answerCallbackQuery",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  callback_query_id: $('Merge Callback And Row').item.json.callbackQueryId,\n  text: 'Verified! Welcome.'\n}) }}",
+        "options": {}
+      },
+      "id": "675a5b6a-2d64-4a3a-89ec-a58807d4a99d",
+      "name": "Answer Verified",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -384,
+        1168
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.telegram.org/bot{{ $env.TELEGRAM_BOT_TOKEN }}/deleteMessage",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ chat_id: $('Merge Callback And Row').item.json.chatId, message_id: $('Merge Callback And Row').item.json.dbMessageId }) }}",
+        "options": {}
+      },
+      "id": "54021acc-caa2-4c9c-ac69-62c2c8e2af2b",
+      "name": "Delete Challenge Verified",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -192,
+        1168
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "DELETE FROM pending_verifications WHERE chat_id = {{ $('Merge Callback And Row').item.json.chatId }} AND user_id = {{ $('Merge Callback And Row').item.json.targetUserId }};",
+        "options": {}
+      },
+      "id": "15352e10-fd1d-422a-8c5f-c70b5e551f72",
+      "name": "Delete Pending Row Verified",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        0,
+        1168
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "6WUwV5V3NE7UTeBm",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE pending_verifications SET attempts = attempts + 1\nWHERE chat_id = {{ $json.chatId }} AND user_id = {{ $json.targetUserId }}\nRETURNING attempts, message_id;",
+        "options": {}
+      },
+      "id": "2fcc8666-8659-487f-a8b9-de0e287a467a",
+      "name": "Increment Attempts",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        -592,
+        1424
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "6WUwV5V3NE7UTeBm",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 1
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "f128110d-4da4-4e25-9f8e-806cce951683",
+              "leftValue": "={{ $json.attempts }}",
+              "rightValue": 3,
+              "operator": {
+                "type": "number",
+                "operation": "lt"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "c54fcc06-a6b5-43af-ae98-a467cb517e48",
+      "name": "Under Limit",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -384,
+        1424
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const options = [2,3,4,5,6,7,8,9].sort(() => Math.random() - 0.5).slice(0, 4);\nconst correctIndex = Math.floor(Math.random() * 4);\nconst cb = $('Merge Callback And Row').item.json;\nconst attempts = $json.attempts;\nconst keyboard = {\n  inline_keyboard: [ options.map((n, i) => ({ text: String(n), callback_data: `v:${cb.targetUserId}:${i}` })) ]\n};\n\nreturn {\n  json: {\n    chatId: cb.chatId,\n    targetUserId: cb.targetUserId,\n    messageId: $json.message_id,\n    callbackQueryId: cb.callbackQueryId,\n    correctIndex,\n    keyboard,\n    remaining: 3 - attempts,\n    promptText: `Wrong answer. Tap *${options[correctIndex]}* — ${3 - attempts} attempt(s) left.`\n  }\n};"
+      },
+      "id": "e5e6392d-f17d-463a-8ea7-5b2ee63585ad",
+      "name": "Build New Challenge",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -160,
+        1360
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.telegram.org/bot{{ $env.TELEGRAM_BOT_TOKEN }}/editMessageText",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  chat_id: $json.chatId,\n  message_id: $json.messageId,\n  text: $json.promptText,\n  parse_mode: 'Markdown',\n  reply_markup: $json.keyboard\n}) }}",
+        "options": {}
+      },
+      "id": "2014188c-e390-496e-ba74-e84cd7935284",
+      "name": "Edit Challenge Message",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        64,
+        1360
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE pending_verifications SET correct_index = {{ $('Build New Challenge').item.json.correctIndex }} WHERE chat_id = {{ $('Build New Challenge').item.json.chatId }} AND user_id = {{ $('Build New Challenge').item.json.targetUserId }};",
+        "options": {}
+      },
+      "id": "d3bfb1d6-fb12-4581-90a4-f91dc17d5c99",
+      "name": "Update Correct Index",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        272,
+        1360
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "6WUwV5V3NE7UTeBm",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.telegram.org/bot{{ $env.TELEGRAM_BOT_TOKEN }}/answerCallbackQuery",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  callback_query_id: $json.callbackQueryId,\n  text: `Wrong — ${$json.remaining} attempt(s) left`,\n  show_alert: true\n}) }}",
+        "options": {}
+      },
+      "id": "98107fd1-b6ce-4d3d-8485-236769d964a4",
+      "name": "Answer Wrong Try Again",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        512,
+        1360
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.telegram.org/bot{{ $env.TELEGRAM_BOT_TOKEN }}/banChatMember",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ chat_id: $('Merge Callback And Row').item.json.chatId, user_id: $('Merge Callback And Row').item.json.targetUserId, until_date: Math.floor(Date.now()/1000) + 300 }) }}",
+        "options": {}
+      },
+      "id": "119c3bca-7cfe-40b0-b392-f394e5950b51",
+      "name": "Ban Member Strikeout",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -160,
+        1536
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.telegram.org/bot{{ $env.TELEGRAM_BOT_TOKEN }}/deleteMessage",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ chat_id: $('Merge Callback And Row').item.json.chatId, message_id: $('Merge Callback And Row').item.json.dbMessageId }) }}",
+        "options": {}
+      },
+      "id": "94068190-b6ff-4312-a82b-d86fcafa5f70",
+      "name": "Delete Challenge Strikeout",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        272,
+        1536
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "DELETE FROM pending_verifications WHERE chat_id = {{ $('Merge Callback And Row').item.json.chatId }} AND user_id = {{ $('Merge Callback And Row').item.json.targetUserId }};",
+        "options": {}
+      },
+      "id": "098ff391-6572-481d-84c0-29ec75d9ecc9",
+      "name": "Delete Pending Row Strikeout",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        512,
+        1536
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "6WUwV5V3NE7UTeBm",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.telegram.org/bot{{ $env.TELEGRAM_BOT_TOKEN }}/answerCallbackQuery",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  callback_query_id: $json.callbackQueryId,\n  text: 'Too many failed attempts — removed from group',\n  show_alert: true\n}) }}",
+        "options": {}
+      },
+      "id": "73e67010-03b5-4bf4-a219-876fecadeb03",
+      "name": "Answer Too Many Attempts",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        720,
+        1536
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 1
+            }
+          ]
+        }
+      },
+      "id": "171d3b02-89a5-4fe6-ae74-0eac81e2b6e2",
+      "name": "Every Minute",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -2720,
+        -480
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT chat_id, user_id, message_id FROM pending_verifications WHERE deadline < now();",
+        "options": {}
+      },
+      "id": "4d3a79ad-03c4-4930-a04c-986598022d06",
+      "name": "Get Timed Out Rows",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        -2560,
+        -480
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "6WUwV5V3NE7UTeBm",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.telegram.org/bot{{ $env.TELEGRAM_BOT_TOKEN }}/banChatMember",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ chat_id: $json.chat_id, user_id: $json.user_id, until_date: Math.floor(Date.now()/1000) + 300 }) }}",
+        "options": {}
+      },
+      "id": "b764cba0-df72-4d52-a5b0-7dc69381b27f",
+      "name": "Ban Member Timeout",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -2368,
+        -480
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.telegram.org/bot{{ $env.TELEGRAM_BOT_TOKEN }}/deleteMessage",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ chat_id: $('Get Timed Out Rows').item.json.chat_id, message_id: $('Get Timed Out Rows').item.json.message_id }) }}",
+        "options": {}
+      },
+      "id": "5056ae40-d3d2-494d-8a27-afafb4a503c9",
+      "name": "Delete Challenge Timeout",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -2176,
+        -480
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "DELETE FROM pending_verifications WHERE chat_id = {{ $('Get Timed Out Rows').item.json.chat_id }} AND user_id = {{ $('Get Timed Out Rows').item.json.user_id }};",
+        "options": {}
+      },
+      "id": "d4e40e81-449a-47e2-a608-e9eb506d8bc5",
+      "name": "Delete Pending Row Timeout",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        -1984,
+        -480
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "6WUwV5V3NE7UTeBm",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "YOUR_GROUP_CHAT_ID",
+        "text": "=Welcome onboard, <b><a href=\"tg://user?id={{ $('Merge Callback And Row').item.json.targetUserId }}\">@{{ ($('Merge Callback And Row').item.json.targetFirstName || 'Member').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') }}</a></b>! 👋✨\n\nGrup ini tempat <i>freelancer</i> saling support. Bebas <i>sharing</i> info <a href=\"https://t.me/c/YOUR_GROUP_ID/JOB_OPENING_THREAD_ID\"><b>🔎 Job Opening</b></a>, diskusi <a href=\"https://t.me/c/YOUR_GROUP_ID/ONGOING_PROJECT_THREAD_ID\"><b>💼 Ongoing Project</b></a>, <a href=\"https://t.me/c/YOUR_GROUP_ID/VERIFIED_PAYOUT_THREAD_ID\"><b>💸 Verified Payout</b></a>, sampai info <a href=\"https://t.me/c/YOUR_GROUP_ID/SCAMMER_THREAD_ID\"><b>⚠️ Scammer</b></a>. \n\nUntuk diskusi yang spesifik silakan bisa masuk ke channel sesuai platform: \n<a href=\"https://t.me/c/YOUR_GROUP_ID/CROWDGEN_THREAD_ID\">Crowdgen</a> | <a href=\"https://t.me/c/YOUR_GROUP_ID/OUTLIER_THREAD_ID\">Outlier</a> | <a href=\"https://t.me/c/YOUR_GROUP_ID/MERCOR_THREAD_ID\">Mercor</a> | <a href=\"https://t.me/c/YOUR_GROUP_ID/DATAANNOTATION_THREAD_ID\">DataAnnotation</a> | <a href=\"https://t.me/c/YOUR_GROUP_ID/TMAXXX_THREAD_ID\">T-Maxxx</a> | <a href=\"https://t.me/c/YOUR_GROUP_ID/BABEL_AUDIO_THREAD_ID\">Babel Audio</a> | <a href=\"https://t.me/c/YOUR_GROUP_ID/RWS_THREAD_ID\">RWS</a> | <a href=\"https://t.me/c/YOUR_GROUP_ID/WELO_THREAD_ID\">Welo</a> | <a href=\"https://t.me/c/YOUR_GROUP_ID/TELUS_THREAD_ID\">Telus</a> | <a href=\"https://t.me/c/YOUR_GROUP_ID/ONEFORMA_THREAD_ID\">OneForma</a> | <a href=\"https://t.me/c/YOUR_GROUP_ID/TMAXXX_THREAD_ID\">Pair Recording</a> | <a href=\"https://t.me/c/YOUR_GROUP_ID/INVISIBLE_THREAD_ID\">Invisible</a> | <a href=\"https://t.me/c/YOUR_GROUP_ID/IMERIT_THREAD_ID\">iMerit</a> | <a href=\"https://t.me/c/YOUR_GROUP_ID/PROLIFIC_THREAD_ID\">Prolific</a> \n\nAda juga <a href=\"https://t.me/c/YOUR_GROUP_ID/ENGLISH_CLASS_THREAD_ID\"><b>🗣 English Class</b></a>, <a href=\"https://t.me/c/YOUR_GROUP_ID/CODING_CLASS_THREAD_ID\"><b>👩‍💻 Coding</b></a>, <a href=\"https://t.me/c/YOUR_GROUP_ID/TIPS_TRICKS_THREAD_ID\"><b>💻 Tips & Tricks</b></a>, dan <a href=\"https://t.me/c/YOUR_GROUP_ID/INCOGNITO_THREAD_ID\"><b>👀 Incognito</b></a> buat curhat/konsultasi bebas (termasuk 21+). \n\n🤖 Ada bot MasCuan yang siap bantu, tinggal ketik <code>/help</code> buat lihat <i>command</i> yang tersedia. Selamat cari cuan, semoga project impian segera datang! 🎉",
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "HTML"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        176,
+        1168
+      ],
+      "id": "fdb8fb5c-6bb3-4dcb-a219-230897063318",
+      "name": "Send Welcome",
+      "webhookId": "300086a4-6145-49db-84fa-4972d2aafb54",
+      "credentials": {
+        "telegramApi": {
+          "id": "Gzt8GYCdmJAP19cR",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "=Mohon maaf, tipe file yang Anda kirim belum dapat disimpan ke <i>database</i>.\n\n<b>Error</b>: <i>File extention is not supported. Only support DOCX, XML, YML, XLSX, CSV, PDF, TXT, PPTX, HTML files.</i>",
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "HTML",
+          "reply_to_message_id": "={{ $('Telegram Trigger').item.json.message.message_id }}"
+        }
+      },
+      "id": "17167fa5-524f-46af-83f6-bc431ffdaea1",
+      "name": "Send Error - Doc Not Supported",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -1456,
+        928
+      ],
+      "webhookId": "1d5e5834-058c-4ac4-ac80-e0a96152981c",
+      "credentials": {
+        "telegramApi": {
+          "id": "Gzt8GYCdmJAP19cR",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "=Mohon maaf, file dokumen belum dapat terbaca. Silakan coba lagi!\n\n<b>Error</b>: <i>The generated content was filtered because it may contain material that resembles existing copyrighted works.</i>",
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "HTML",
+          "reply_to_message_id": "={{ $('Telegram Trigger').item.json.message.message_id }}"
+        }
+      },
+      "id": "cb977081-1c72-4110-a6e3-88457658bf14",
+      "name": "Send Error - Doc Copyrighted",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -480,
+        672
+      ],
+      "webhookId": "1d5e5834-058c-4ac4-ac80-e0a96152981c",
+      "credentials": {
+        "telegramApi": {
+          "id": "Gzt8GYCdmJAP19cR",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "={{ $('Parse Payout').item.json.Category === 'paid' ? '✅💸 <b>VERIFIED PAYMENT</b> 💸✅' : $('Parse Payout').item.json.Category === 'pending' ? '⏳ <b>PENDING PAYMENT</b> ⏳' : '🧾 <b>INVOICE / BILL</b> 🧾' }}\n\n{{ $('Parse Payout').item.json.Paying_Company ? '🏢 Platform: <b>' + $('Parse Payout').item.json.Paying_Company + '</b>' : '' }}\n💳 Method: <b>{{ $('Parse Payout').item.json.Payment_Method }}</b>\n💰 Amount: <b>{{ $('Parse Payout').item.json.Amount }}</b>\n📅 Date: {{ $('Parse Payout').item.json.Date }}\n\n----------\n📩 Posted By: <b><a href=\"tg://user?id={{ $('Telegram Trigger').item.json.message.from.id }}\">@{{ $('Telegram Trigger').item.json.message.from.first_name }}</a></b>\n📌 Original Post: <a href=\"https://t.me/c/YOUR_GROUP_ID/{{ $('Telegram Trigger').item.json.message.message_thread_id ?? 1 }}/{{ $('Telegram Trigger').item.json.message.message_id }}\">here</a>\n\n#verified #payout #payment {{ $('Parse Payout').item.json.Paying_Company ? '#' + $('Parse Payout').item.json.Paying_Company.trim().split(/\\s+/)[0].replace(/[^a-zA-Z0-9]/g, '') : '' }}",
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "HTML",
+          "message_thread_id": "=VERIFIED_PAYOUT_THREAD_ID"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        16,
+        96
+      ],
+      "id": "1035f52d-0e09-40b4-aefa-f0cb49cd5320",
+      "name": "Send Payout Alert",
+      "webhookId": "REPLACE_ME_WEBHOOK_ID_2",
+      "credentials": {
+        "telegramApi": {
+          "id": "Gzt8GYCdmJAP19cR",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT \n  '{{ $json.payDesc }}' AS \"payDesc\",\n    metadata->>'sender_name' AS sender,\n    (metadata->>'created_at_gmt7')::timestamptz AS payment_date,\n    metadata->>'source' AS source,\n    content\nFROM telegram_knowledge\nWHERE (content ILIKE '%pending payment%' OR content ILIKE '%verified payout proof%' OR content ILIKE  '%invoice / bill%')\n  AND metadata->>'source' = 'payout_proof'\nORDER BY (metadata->>'created_at_gmt7')::timestamptz DESC\nLIMIT 10;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        -768,
+        -816
+      ],
+      "id": "4e21a52d-bf1c-4c73-80d0-fd46b9c9067e",
+      "name": "Latest 10 Peyments",
+      "credentials": {
+        "postgres": {
+          "id": "6WUwV5V3NE7UTeBm",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT \n  '{{ $json.payDesc }}' AS \"payDesc\",\n    metadata->>'sender_name' AS sender,\n    (metadata->>'created_at_gmt7')::timestamptz AS payment_date,\n    metadata->>'source' AS source,\n    content\nFROM telegram_knowledge\nWHERE (content ILIKE '%pending payment%' OR content ILIKE '%verified payout proof%' OR content ILIKE  '%invoice / bill%')\n  AND metadata->>'source' = 'payout_proof'\n  AND (metadata->>'created_at_gmt7')::timestamptz >= date_trunc('month', CURRENT_TIMESTAMP)\n  AND (metadata->>'created_at_gmt7')::timestamptz <  date_trunc('month', CURRENT_TIMESTAMP) + INTERVAL '1 month'\nORDER BY (metadata->>'created_at_gmt7')::timestamptz DESC;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        -768,
+        -672
+      ],
+      "id": "f983d8c0-fa1e-420f-9d39-cc0e6a758f6e",
+      "name": "This Month Payments",
+      "credentials": {
+        "postgres": {
+          "id": "6WUwV5V3NE7UTeBm",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "902b3721-3972-47d2-a014-3e9b5f58c26b",
+              "name": "payDesc",
+              "value": "Latest 10 Payments",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        -944,
+        -816
+      ],
+      "id": "5076ef86-aead-4cb9-acb6-9ebaca6bcdc8",
+      "name": "payDesc (10 Payments)"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "902b3721-3972-47d2-a014-3e9b5f58c26b",
+              "name": "payDesc",
+              "value": "This Month Payments",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        -944,
+        -672
+      ],
+      "id": "71aa5279-7335-4ee4-b84a-c8da6efea300",
+      "name": "payDesc (This Month)"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "902b3721-3972-47d2-a014-3e9b5f58c26b",
+              "name": "payDesc",
+              "value": "Last Month Payments",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        -944,
+        -528
+      ],
+      "id": "232c36f4-9431-4638-8cd7-8d3e0411c696",
+      "name": "payDesc (Last Month)"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT \n  '{{ $json.payDesc }}' AS \"payDesc\",\n    metadata->>'sender_name' AS sender,\n    (metadata->>'created_at_gmt7')::timestamptz AS payment_date,\n    metadata->>'source' AS source,\n    content\nFROM telegram_knowledge\nWHERE (content ILIKE '%pending payment%' OR content ILIKE '%verified payout proof%' OR content ILIKE  '%invoice / bill%')\n  AND metadata->>'source' = 'payout_proof'\n  AND (metadata->>'created_at_gmt7')::timestamptz >= date_trunc('month', CURRENT_TIMESTAMP) - INTERVAL '1 month'\n  AND (metadata->>'created_at_gmt7')::timestamptz <  date_trunc('month', CURRENT_TIMESTAMP)\nORDER BY (metadata->>'created_at_gmt7')::timestamptz DESC;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        -768,
+        -528
+      ],
+      "id": "b735bb84-8eec-4c79-be3c-8d1f81b35ada",
+      "name": "Last Month Payments",
+      "credentials": {
+        "postgres": {
+          "id": "6WUwV5V3NE7UTeBm",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1. Get all items from the previous SQL node\nlet items = $input.all();\n\n// Sort by date: Newest (latest) at the top\nitems.sort((a, b) => new Date(b.json.payment_date) - new Date(a.json.payment_date));\n\n// Helper to escape HTML characters safely for Telegram\nconst escapeHtml = (str) => \n  (str || '')\n    .replace(/&/g, '&amp;')\n    .replace(/</g, '&lt;')\n    .replace(/>/g, '&gt;');\n\n// Get payDesc from the first item, fallback if missing\nconst title = escapeHtml(items[0]?.json?.payDesc || 'Payments');\n\nlet message = `💳 <b>${title}</b>\\n\\n`;\n\n// 2. Loop through each item\nitems.forEach((item) => {\n  const p = item.json;\n  \n  // Format date to \"Jul 15, 2026\"\n  const date = new Date(p.payment_date).toLocaleDateString('en-US', {\n    month: 'short',\n    day: '2-digit',\n    year: 'numeric'\n  });\n\n  const sender = escapeHtml(p.sender);\n\n  // Extract Amount and From fields from content\n  const amountMatch = p.content.match(/Amount:\\s*([^|]+)/i);\n  const fromMatch = p.content.match(/From:\\s*([^|]+)/i);\n\n  let detail = '';\n\n  if (amountMatch) {\n    const amount = amountMatch[1].trim();\n    const from = fromMatch ? fromMatch[1].trim() : '';\n    \n    // If 'From' exists: \"33210 IDR from Uber\", otherwise just \"$307.91\"\n    detail = from ? `${amount} from ${from}` : amount;\n  } else {\n    // Clean fallback if \"Amount:\" tag isn't explicitly present\n    detail = p.content\n      .replace(/^(Pending payment|Verified payout proof|Invoice \\/ Bill)\\s*—\\s*/gi, '')\n      .replace(/\\b(Method|Amount|From):[^|]*\\|\\s*/gi, '')\n      .replace(/\\s*\\|\\s*(Date|Posted by):[^|]*/gi, '')\n      .trim();\n  }\n\n  // Uniform Output: Aug 19, 2026 : Dikta — 33210 IDR from Uber\n  message += `<b>${date}</b> : <b>${sender}</b> — ${escapeHtml(detail)}\\n`;\n});\n\n// 3. Return as an array of objects for n8n\nreturn [\n  {\n    json: {\n      telegram_message: message.trim()\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -480,
+        -672
+      ],
+      "id": "01cd58a1-f870-4319-8db1-1082cfe3025c",
+      "name": "Output Payments"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "={{ $json.telegram_message }} \n\n<i>Selengkapnya dapat dilihat di <a href=\"https://t.me/c/YOUR_GROUP_ID/VERIFIED_PAYOUT_THREAD_ID\"><b>💸 Verified Payout</b></a>.</i>",
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "HTML",
+          "reply_to_message_id": "={{ $('Telegram Trigger').item.json.message.message_id }}"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -272,
+        -672
+      ],
+      "id": "c165eae9-37fe-46a9-addc-1980b975c1a8",
+      "name": "Send Payment List",
+      "webhookId": "2a2a5c18-9aea-492a-9ede-4c6078456a9d",
+      "credentials": {
+        "telegramApi": {
+          "id": "Gzt8GYCdmJAP19cR",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "keep": "lastItems"
+      },
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        224,
+        752
+      ],
+      "id": "7b418e4c-e8ef-4a01-b35c-1a8bb2e6bd04",
+      "name": "Limit"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "<i>Mohon maaf pencarian jawaban terhenti. Silakan tanya kembali.</i>",
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "HTML",
+          "reply_to_message_id": "={{ $('Telegram Trigger').item.json.message.message_id }}"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -224,
+        -832
+      ],
+      "id": "e2f2a617-5939-4f91-8d0c-c32c7c7dcf70",
+      "name": "Send a text message",
+      "webhookId": "cb8e0488-1042-420f-be78-1e89a5df36b3",
+      "credentials": {
+        "telegramApi": {
+          "id": "Gzt8GYCdmJAP19cR",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "tableName": "telegram_knowledge",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.1,
+      "position": [
+        -144,
+        -304
+      ],
+      "id": "a372131e-711e-433f-9b70-d0527b960d64",
+      "name": "Insert Job Opening",
+      "credentials": {
+        "supabaseApi": {
+          "id": "QYdAmDIZcGklngZ1",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "tableName": {
+          "__rl": true,
+          "value": "telegram_knowledge",
+          "mode": "list",
+          "cachedResultName": "telegram_knowledge"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.3,
+      "position": [
+        432,
+        16
+      ],
+      "id": "9fe41799-c975-4b05-98d6-dd7309a96e73",
+      "name": "Insert No Image",
+      "credentials": {
+        "supabaseApi": {
+          "id": "QYdAmDIZcGklngZ1",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "tableName": {
+          "__rl": true,
+          "value": "telegram_knowledge",
+          "mode": "list",
+          "cachedResultName": "telegram_knowledge"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.3,
+      "position": [
+        512,
+        272
+      ],
+      "id": "20aed08d-894f-4bb2-b510-64cddd364f9b",
+      "name": "Insert Image",
+      "credentials": {
+        "supabaseApi": {
+          "id": "QYdAmDIZcGklngZ1",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "tableName": {
+          "__rl": true,
+          "value": "telegram_knowledge",
+          "mode": "list",
+          "cachedResultName": "telegram_knowledge"
+        },
+        "embeddingBatchSize": 100,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.3,
+      "position": [
+        -96,
+        752
+      ],
+      "id": "0bb6b3c3-f678-499b-9b2a-cf890fb81cbc",
+      "name": "Insert Document",
+      "credentials": {
+        "supabaseApi": {
+          "id": "QYdAmDIZcGklngZ1",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "tableName": "telegram_knowledge",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.1,
+      "position": [
+        -288,
+        96
+      ],
+      "id": "e31622df-7624-4faf-aa9d-4a514a335e27",
+      "name": "Insert Payout",
+      "credentials": {
+        "supabaseApi": {
+          "id": "QYdAmDIZcGklngZ1",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.telegram.org/bot{{ $env.TELEGRAM_BOT_TOKEN }}/setMessageReaction",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"chat_id\": \"{{ $('Telegram Trigger').item.json.message.chat.id }}\",\n  \"message_id\": \"{{ $('Telegram Trigger').item.json.message.message_id }}\",\n  \"reaction\": [{ \"type\": \"emoji\", \"emoji\": \"👀\" }]\n}",
+        "options": {}
+      },
+      "id": "883ef08e-f933-4435-bb42-f3bbfdd84efe",
+      "name": "Processing",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1488,
+        736
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.telegram.org/bot{{ $env.TELEGRAM_BOT_TOKEN }}/setMessageReaction",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"chat_id\": \"{{ $('Telegram Trigger').item.json.message.chat.id }}\",\n  \"message_id\": \"{{ $('Telegram Trigger').item.json.message.message_id }}\",\n  \"reaction\": [{ \"type\": \"emoji\", \"emoji\": \"💯\" }]\n}",
+        "options": {}
+      },
+      "id": "eeebec16-5c97-43c1-8542-de5a5a9266f4",
+      "name": "Doc Finished",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        432,
+        752
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.telegram.org/bot{{ $env.TELEGRAM_BOT_TOKEN }}/setMessageReaction",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"chat_id\": \"{{ $('Telegram Trigger').item.json.message.chat.id }}\",\n  \"message_id\": \"{{ $('Telegram Trigger').item.json.message.message_id }}\",\n  \"reaction\": [{ \"type\": \"emoji\", \"emoji\": \"👀\" }]\n}",
+        "options": {}
+      },
+      "id": "c805e7fc-a9de-4cb7-af93-0d463a346801",
+      "name": "Ask Processing",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -416,
+        -1136
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.telegram.org/bot{{ $env.TELEGRAM_BOT_TOKEN }}/setMessageReaction",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"chat_id\": \"{{ $('Telegram Trigger').item.json.message.chat.id }}\",\n  \"message_id\": \"{{ $('Telegram Trigger').item.json.message.message_id }}\",\n  \"reaction\": [{ \"type\": \"emoji\", \"emoji\": \"💯\" }]\n}",
+        "options": {}
+      },
+      "id": "59d0a830-3d9e-4a7b-a53e-f680db568a55",
+      "name": "Ask Finished",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        656,
+        -992
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.telegram.org/bot{{ $env.TELEGRAM_BOT_TOKEN }}/setMessageReaction",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"chat_id\": \"{{ $('Telegram Trigger').item.json.message.chat.id }}\",\n  \"message_id\": \"{{ $('Telegram Trigger').item.json.message.message_id }}\",\n  \"reaction\": [{ \"type\": \"emoji\", \"emoji\": \"😢\" }]\n}",
+        "options": {}
+      },
+      "id": "3a32c369-2636-4217-84c0-ad8ef3d41eab",
+      "name": "Doc Error",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -288,
+        672
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Group?",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Is New Member Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings Google Gemini1": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Insert Image",
+            "type": "ai_embedding",
+            "index": 0
+          },
+          {
+            "node": "Insert No Image",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Data Loader": {
+      "ai_document": [
+        [
+          {
+            "node": "Insert No Image",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Data Loader1": {
+      "ai_document": [
+        [
+          {
+            "node": "Insert Image",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Have Image?1": {
+      "main": [
+        [
+          {
+            "node": "Insert No Image",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get Photo File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analyze an image": {
+      "main": [
+        [
+          {
+            "node": "Insert Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Link": {
+      "main": [
+        [
+          {
+            "node": "Get Link Info",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Link Info": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Job Opening Only",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Job Opening Only": {
+      "main": [
+        [
+          {
+            "node": "Job Opening Record",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Intities": {
+      "main": [
+        [
+          {
+            "node": "Command Router",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Extract Link",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Have Image?1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Extract Link",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Have Image?1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Have Image?1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Command Router": {
+      "main": [
+        [
+          {
+            "node": "Set hoursAgo (latest)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Set hoursAgo (recent)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Set messageLimit (100)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Set messageLimit (200)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send How to Use Bot",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Parse Question",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "payDesc (10 Payments)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "payDesc (This Month)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "payDesc (Last Month)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set hoursAgo (latest)": {
+      "main": [
+        [
+          {
+            "node": "Last X Hours Messages",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set hoursAgo (recent)": {
+      "main": [
+        [
+          {
+            "node": "Last X Hours Messages",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set messageLimit (100)": {
+      "main": [
+        [
+          {
+            "node": "Last N Messages",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set messageLimit (200)": {
+      "main": [
+        [
+          {
+            "node": "Last N Messages",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Last N Messages": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Last X Hours Messages": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "node": "Message a model1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model1": {
+      "main": [
+        [
+          {
+            "node": "Send Command Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Question": {
+      "main": [
+        [
+          {
+            "node": "Embed Question",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embed Question": {
+      "main": [
+        [
+          {
+            "node": "Extract Keywords",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search Vector DB": {
+      "main": [
+        [
+          {
+            "node": "Get Source Link",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Group?": {
+      "main": [
+        [
+          {
+            "node": "Exclude Sticker",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Contain Doc?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Exclude Sticker": {
+      "main": [
+        [
+          {
+            "node": "Check Intities",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "File Type": {
+      "main": [
+        [
+          {
+            "node": "Get non PDF",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get PDF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Contain Doc?": {
+      "main": [
+        [
+          {
+            "node": "Not a Video",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert File to JSON": {
+      "main": [
+        [
+          {
+            "node": "Normalize Output",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Analyze document": {
+      "main": [
+        [
+          {
+            "node": "RECITATION?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get non PDF": {
+      "main": [
+        [
+          {
+            "node": "Convert File to JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get PDF": {
+      "main": [
+        [
+          {
+            "node": "Analyze document",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Output": {
+      "main": [
+        [
+          {
+            "node": "Insert Document",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings Google Gemini": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Insert Document",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Data Loader2": {
+      "ai_document": [
+        [
+          {
+            "node": "Insert Document",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RECITATION?": {
+      "main": [
+        [
+          {
+            "node": "Send Error - Doc Copyrighted",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Normalize Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Extension": {
+      "main": [
+        [
+          {
+            "node": "Supported?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supported?": {
+      "main": [
+        [
+          {
+            "node": "Processing",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Error - Doc Not Supported",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Source Link": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Combine Source Link": {
+      "main": [
+        [
+          {
+            "node": "Send Answer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Combine Source Link",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Not a Video": {
+      "main": [
+        [
+          {
+            "node": "Check Extension",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verified Payout?": {
+      "main": [
+        [
+          {
+            "node": "Build Payout Record",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get Photo File1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Payout Record": {
+      "main": [
+        [
+          {
+            "node": "Insert Payout",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analyze Payout": {
+      "main": [
+        [
+          {
+            "node": "Parse Payout",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Payout": {
+      "main": [
+        [
+          {
+            "node": "Verified Payout?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings (Payout)": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Insert Payout",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Data Loader3": {
+      "ai_document": [
+        [
+          {
+            "node": "Insert Payout",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Photo File": {
+      "main": [
+        [
+          {
+            "node": "Analyze Payout",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Job Opening Record": {
+      "main": [
+        [
+          {
+            "node": "Insert Job Opening",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings (Payout)1": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Insert Job Opening",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Data Loader4": {
+      "ai_document": [
+        [
+          {
+            "node": "Insert Job Opening",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Keywords": {
+      "main": [
+        [
+          {
+            "node": "Search Vector DB",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Ask Processing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Weekly Schedule": {
+      "main": [
+        [
+          {
+            "node": "Get Weekly Recap",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Daily Schedule": {
+      "main": [
+        [
+          {
+            "node": "Get Daily Recap",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Daily Recap": {
+      "main": [
+        [
+          {
+            "node": "Send Daily Recap",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Weekly Recap": {
+      "main": [
+        [
+          {
+            "node": "Send Weekly Recap",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Daily Recap": {
+      "main": [
+        [
+          {
+            "node": "Create Daily Recap",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Weekly Recap": {
+      "main": [
+        [
+          {
+            "node": "Create Weekly Recap",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Photo File1": {
+      "main": [
+        [
+          {
+            "node": "Analyze an image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Searchable?": {
+      "main": [
+        [
+          {
+            "node": "isSearchable",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is New Member Event": {
+      "main": [
+        [
+          {
+            "node": "Split New Members",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Is Verify Callback",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Verify Callback": {
+      "main": [
+        [
+          {
+            "node": "Parse Callback",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Ignore Other Updates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split New Members": {
+      "main": [
+        [
+          {
+            "node": "Build Challenge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Challenge": {
+      "main": [
+        [
+          {
+            "node": "Restrict New Member",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Restrict New Member": {
+      "main": [
+        [
+          {
+            "node": "Send Challenge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Challenge": {
+      "main": [
+        [
+          {
+            "node": "Prepare DB Row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare DB Row": {
+      "main": [
+        [
+          {
+            "node": "Insert Pending Verification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Callback": {
+      "main": [
+        [
+          {
+            "node": "Is Own Verification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Own Verification": {
+      "main": [
+        [
+          {
+            "node": "Get Pending Row",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Answer Not Yours",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Pending Row": {
+      "main": [
+        [
+          {
+            "node": "Merge Callback And Row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Callback And Row": {
+      "main": [
+        [
+          {
+            "node": "Row Found",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Row Found": {
+      "main": [
+        [
+          {
+            "node": "Is Correct",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Answer Expired",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Correct": {
+      "main": [
+        [
+          {
+            "node": "Unrestrict Member",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Increment Attempts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Unrestrict Member": {
+      "main": [
+        [
+          {
+            "node": "Answer Verified",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Answer Verified": {
+      "main": [
+        [
+          {
+            "node": "Delete Challenge Verified",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete Challenge Verified": {
+      "main": [
+        [
+          {
+            "node": "Delete Pending Row Verified",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete Pending Row Verified": {
+      "main": [
+        [
+          {
+            "node": "Send Welcome",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Increment Attempts": {
+      "main": [
+        [
+          {
+            "node": "Under Limit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Under Limit": {
+      "main": [
+        [
+          {
+            "node": "Build New Challenge",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Ban Member Strikeout",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build New Challenge": {
+      "main": [
+        [
+          {
+            "node": "Edit Challenge Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Challenge Message": {
+      "main": [
+        [
+          {
+            "node": "Update Correct Index",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Correct Index": {
+      "main": [
+        [
+          {
+            "node": "Answer Wrong Try Again",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ban Member Strikeout": {
+      "main": [
+        [
+          {
+            "node": "Delete Challenge Strikeout",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete Challenge Strikeout": {
+      "main": [
+        [
+          {
+            "node": "Delete Pending Row Strikeout",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete Pending Row Strikeout": {
+      "main": [
+        [
+          {
+            "node": "Answer Too Many Attempts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Every Minute": {
+      "main": [
+        [
+          {
+            "node": "Get Timed Out Rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Timed Out Rows": {
+      "main": [
+        [
+          {
+            "node": "Ban Member Timeout",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ban Member Timeout": {
+      "main": [
+        [
+          {
+            "node": "Delete Challenge Timeout",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete Challenge Timeout": {
+      "main": [
+        [
+          {
+            "node": "Delete Pending Row Timeout",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Latest 10 Peyments": {
+      "main": [
+        [
+          {
+            "node": "Output Payments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "This Month Payments": {
+      "main": [
+        [
+          {
+            "node": "Output Payments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "payDesc (10 Payments)": {
+      "main": [
+        [
+          {
+            "node": "Latest 10 Peyments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "payDesc (This Month)": {
+      "main": [
+        [
+          {
+            "node": "This Month Payments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "payDesc (Last Month)": {
+      "main": [
+        [
+          {
+            "node": "Last Month Payments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Last Month Payments": {
+      "main": [
+        [
+          {
+            "node": "Output Payments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Output Payments": {
+      "main": [
+        [
+          {
+            "node": "Send Payment List",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limit": {
+      "main": [
+        [
+          {
+            "node": "Doc Finished",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert Job Opening": {
+      "main": [
+        [
+          {
+            "node": "Send Job Posting",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert Document": {
+      "main": [
+        [
+          {
+            "node": "Limit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert Payout": {
+      "main": [
+        [
+          {
+            "node": "Send Payout Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Processing": {
+      "main": [
+        [
+          {
+            "node": "File Type",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Answer": {
+      "main": [
+        [
+          {
+            "node": "Ask Finished",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert Image": {
+      "main": [
+        []
+      ]
+    },
+    "Send Error - Doc Copyrighted": {
+      "main": [
+        [
+          {
+            "node": "Doc Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false,
+    "timeSavedMode": "fixed",
+    "timezone": "Asia/Jakarta",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "a6632a30-4205-4cc8-80b3-a1d39c744044",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c46e4e0a8537b98db708ea422a73cccce95057ee54b9ea6f68c3936aef76b8c8"
+  },
+  "nodeGroups": [],
+  "id": "ep1EWmkuv8sQcayu",
+  "tags": []
+}

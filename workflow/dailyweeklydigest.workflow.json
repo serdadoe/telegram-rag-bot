@@ -1,0 +1,288 @@
+{
+  "name": "Telegram RAG Bot — Daily / Weekly Recap Digest",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks",
+              "triggerAtHour": 18,
+              "triggerAtMinute": 5
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -2720,
+        -720
+      ],
+      "id": "37c27482-50f8-4791-9339-29512fb53070",
+      "name": "Weekly Schedule"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 6
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -2720,
+        -960
+      ],
+      "id": "bbd0803d-a15b-4f8e-9ad7-6da39e52e7e9",
+      "name": "Daily Schedule"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "WITH day_messages_raw AS (\n  SELECT id, created_at, content, metadata\n  FROM public.telegram_knowledge\n  WHERE (metadata->>'created_at_gmt7')::timestamp >= (date_trunc('day', now() AT TIME ZONE 'Asia/Jakarta') - INTERVAL '1 day')\n    AND (metadata->>'created_at_gmt7')::timestamp <  date_trunc('day', now() AT TIME ZONE 'Asia/Jakarta')\n    AND metadata->>'chat_id' = 'YOUR_GROUP_CHAT_ID'   -- <-- filter to the target chat/group\n),\nday_messages AS (\n  -- collapse multi-chunk blob rows (same source message, split into pieces by the\n  -- text splitter) into ONE row per message, keeping the earliest chunk as representative\n  SELECT DISTINCT ON (COALESCE(metadata->>'message_id', id::text))\n    id, created_at, content, metadata\n  FROM day_messages_raw\n  ORDER BY\n    COALESCE(metadata->>'message_id', id::text),\n    COALESCE((metadata->'loc'->'lines'->>'from')::int, 0) ASC,\n    created_at ASC\n),\nthread_names(thread_id, thread_name) AS (\n  VALUES\n    (SCAMMER_THREAD_ID, 'Scammer'), (CROWDGEN_THREAD_ID, 'Crowdgen'), (MERCOR_THREAD_ID, 'Mercor'),\n    (JOB_OPENING_THREAD_ID, 'Job Opening'), (ONGOING_PROJECT_THREAD_ID, 'Ongoing Project'), (TELUS_THREAD_ID, 'Telus'),\n    (INCOGNITO_THREAD_ID, 'Incognito'), (RWS_THREAD_ID, 'RWS'), (WELO_THREAD_ID, 'Welo'),\n    (ONEFORMA_THREAD_ID, 'OneForma'), (VERIFIED_PAYOUT_THREAD_ID, 'Verified Payout'), (IMERIT_THREAD_ID, 'iMerit'),\n    (PROLIFIC_THREAD_ID, 'Prolific'), (PAIR_RECORDING_THREAD_ID, 'Pair Recording Indo'), (INVISIBLE_THREAD_ID, 'Invisible'),\n    (CODING_CLASS_THREAD_ID, 'Coding Class'), (ENGLISH_CLASS_THREAD_ID, 'English Class'), (DATAANNOTATION_THREAD_ID, 'DataAnnotation'),\n    (TMAXXX_THREAD_ID, 'TMaxxx'), (OUTLIER_THREAD_ID, 'Outlier'), (TIPS_TRICKS_THREAD_ID, 'Tips & Tricks'), (BABEL_AUDIO_THREAD_ID, 'Babel Audio')\n),\nthread_counts AS (\n  SELECT metadata->>'thread_id' AS thread_id, COUNT(*) AS message_count\n  FROM day_messages\n  WHERE metadata->>'thread_id' IS NOT NULL AND metadata->>'thread_id' <> ''\n  GROUP BY metadata->>'thread_id'\n),\ntop_threads AS (\n  SELECT tc.thread_id,\n         COALESCE(tn.thread_name, tc.thread_id) AS thread_name,\n         tc.message_count\n  FROM thread_counts tc\n  LEFT JOIN thread_names tn ON tn.thread_id = tc.thread_id::bigint\n  ORDER BY tc.message_count DESC\n  LIMIT 3\n),\ntop_members AS (\n  SELECT split_part(COALESCE(metadata->>'sender_name', metadata->>'username'), ' ', 1) AS first_name,\n         COUNT(*) AS message_count\n  FROM day_messages\n  GROUP BY 1\n  ORDER BY message_count DESC\n  LIMIT 3\n)\nSELECT\n  (\n    SELECT COUNT(DISTINCT COALESCE(dm.metadata->>'sender_name', dm.metadata->>'username'))\n    FROM day_messages dm\n  ) AS active_members,\n  (\n    SELECT string_agg(\n      format('%s: %s',\n        COALESCE(dm.metadata->>'sender_name', dm.metadata->>'username', 'unknown'),\n        dm.content\n      ),\n      E'\\n' ORDER BY (dm.metadata->>'created_at_gmt7')::timestamp\n    )\n    FROM day_messages dm\n  ) AS messages,\n  (SELECT json_agg(row_to_json(top_threads)) FROM top_threads) AS top_threads,\n  (SELECT json_agg(row_to_json(top_members)) FROM top_members) AS top_members;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        -2464,
+        -960
+      ],
+      "id": "1ceb2bd9-4ac1-4cf6-ad6c-6c80618c8071",
+      "name": "Get Daily Recap",
+      "credentials": {
+        "postgres": {
+          "id": "6WUwV5V3NE7UTeBm",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "WITH week_messages_raw AS (\n  SELECT id, created_at, content, metadata\n  FROM public.telegram_knowledge\n  WHERE (metadata->>'created_at_gmt7')::timestamp >= date_trunc('week', now() AT TIME ZONE 'Asia/Jakarta')\n    AND (metadata->>'created_at_gmt7')::timestamp <  date_trunc('week', now() AT TIME ZONE 'Asia/Jakarta') + INTERVAL '7 days'\n    AND metadata->>'chat_id' = 'YOUR_GROUP_CHAT_ID'   -- <-- filter to the target chat/group\n),\nweek_messages AS (\n  -- collapse multi-chunk blob rows (same source message, split into pieces by the\n  -- text splitter) into ONE row per message, keeping the earliest chunk as representative\n  SELECT DISTINCT ON (COALESCE(metadata->>'message_id', id::text))\n    id, created_at, content, metadata\n  FROM week_messages_raw\n  ORDER BY\n    COALESCE(metadata->>'message_id', id::text),\n    COALESCE((metadata->'loc'->'lines'->>'from')::int, 0) ASC,\n    created_at ASC\n),\nthread_names(thread_id, thread_name) AS (\n  VALUES\n    (SCAMMER_THREAD_ID, 'Scammer'), (CROWDGEN_THREAD_ID, 'Crowdgen'), (MERCOR_THREAD_ID, 'Mercor'),\n    (JOB_OPENING_THREAD_ID, 'Job Opening'), (ONGOING_PROJECT_THREAD_ID, 'Ongoing Project'), (TELUS_THREAD_ID, 'Telus'),\n    (INCOGNITO_THREAD_ID, 'Incognito'), (RWS_THREAD_ID, 'RWS'), (WELO_THREAD_ID, 'Welo'),\n    (ONEFORMA_THREAD_ID, 'OneForma'), (VERIFIED_PAYOUT_THREAD_ID, 'Verified Payout'), (IMERIT_THREAD_ID, 'iMerit'),\n    (PROLIFIC_THREAD_ID, 'Prolific'), (PAIR_RECORDING_THREAD_ID, 'Pair Recording Indo'), (INVISIBLE_THREAD_ID, 'Invisible'),\n    (CODING_CLASS_THREAD_ID, 'Coding Class'), (ENGLISH_CLASS_THREAD_ID, 'English Class'), (DATAANNOTATION_THREAD_ID, 'DataAnnotation'),\n    (TMAXXX_THREAD_ID, 'TMaxxx'), (OUTLIER_THREAD_ID, 'Outlier'), (TIPS_TRICKS_THREAD_ID, 'Tips & Tricks'), (BABEL_AUDIO_THREAD_ID, 'Babel Audio')\n),\nthread_counts AS (\n  SELECT metadata->>'thread_id' AS thread_id, COUNT(*) AS message_count\n  FROM week_messages\n  WHERE metadata->>'thread_id' IS NOT NULL AND metadata->>'thread_id' <> ''\n  GROUP BY metadata->>'thread_id'\n),\ntop_threads AS (\n  SELECT tc.thread_id,\n         COALESCE(tn.thread_name, tc.thread_id) AS thread_name,\n         tc.message_count\n  FROM thread_counts tc\n  LEFT JOIN thread_names tn ON tn.thread_id = tc.thread_id::bigint\n  ORDER BY tc.message_count DESC\n  LIMIT 5\n),\ntop_members AS (\n  SELECT split_part(COALESCE(metadata->>'sender_name', metadata->>'username'), ' ', 1) AS first_name,\n         COUNT(*) AS message_count\n  FROM week_messages\n  GROUP BY 1\n  ORDER BY message_count DESC\n  LIMIT 5\n)\nSELECT\n  (\n    SELECT COUNT(DISTINCT COALESCE(wm.metadata->>'sender_name', wm.metadata->>'username'))\n    FROM week_messages wm\n  ) AS active_members,\n  (SELECT json_agg(row_to_json(week_messages)) FROM week_messages) AS messages,\n  (SELECT json_agg(row_to_json(top_threads))   FROM top_threads)   AS top_threads,\n  (SELECT json_agg(row_to_json(top_members))   FROM top_members)   AS top_members;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        -2464,
+        -720
+      ],
+      "id": "4360ee5c-fbff-4d33-ac09-991bddf4365b",
+      "name": "Get Weekly Recap",
+      "credentials": {
+        "postgres": {
+          "id": "6WUwV5V3NE7UTeBm",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "models/gemini-3.1-flash-lite"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Analyze yesterday's chat logs and generate a friendly, concise daily digest post using format below. \n\nChat logs for yesterday:\n{{ $json.messages }}\n\nPlease structure the response exactly using this clean format:\n\n☀️ <b>DAILY RECAP</b> ☀️ \n\n<i>Insight penting dari member sepanjang hari kemarin ({{ $today.minus({ days: 1 }).toFormat('cccc, dd LLLL yyyy') }})</i>\n\n🚨 <b>PROJECT UPDATES</b> 🚨\n• <b>[Nama Project/Platform 1]:</b> [Rangkuman 1 kalimat tentang update, rate, atau kendala]\n• <b>[Nama Project/Platform 2]:</b> [Rangkuman 1 kalimat tentang update, rate, atau kendala]\n• <b>[Nama Project/Platform 3]:</b> [Rangkuman 1 kalimat tentang update, rate, atau kendala]\n• <b>[Nama Project/Platform 4]:</b> [Rangkuman 1 kalimat tentang update, rate, atau kendala]\n• <b>[Nama Project/Platform 5]:</b> [Rangkuman 1 kalimat tentang update, rate, atau kendala]\n\n💼 <b>JOB OPENING</b> 💼\n[Rangkum informasi lowongan kerja, project baru, data annotation, atau kesempatan remote work yang dibagikan atau ramai didiskusikan kemarin. Jika tidak ada info lowongan baru, tulis \"Belum ada info lowongan baru kemarin.\"]\n\n🛠️ <b>QUICK FIX & TIPS</b> 🛠️\n• <b>[Kendala]:</b> [Solusi ringkas yang berhasil dicoba anggota kemarin, maks 1 kalimat]\n\n💰 <b>FINANCIAL</b> 💰\n[Kabar seputar withdraw/rate/kurs jika ada, jika tidak ada tulis \"Tidak ada bahasan finansial kemarin.\"]\n\n☕ <b>POJOK SANTAI</b> ☕\n• [Rangkum obrolan santai di grup dalam beberapa point]\n\n💬 <b>Top Active Channels</b>\n1. {{ $json.top_threads[0].thread_name }} ({{ $json.top_threads[0].message_count }} msg)\n2. {{ $json.top_threads[1].thread_name }} ({{ $json.top_threads[1].message_count }} msg)\n3. {{ $json.top_threads[2].thread_name }} ({{ $json.top_threads[2].message_count }} msg)\n\n🏆 <b>Top Active Members</b>\n1. {{ $json.top_members[0].first_name }} ({{ $json.top_members[0].message_count }} msg)\n2. {{ $json.top_members[1].first_name }} ({{ $json.top_members[1].message_count }} msg)\n3. {{ $json.top_members[2].first_name }} ({{ $json.top_members[2].message_count }} msg)\n\n👤<b>Total Active Members:</b> {{ $json.active_members }} members\n\n<i>[1 kalimat singkat penyemangat hari ini, pakai emoji juga ya]</i>"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {
+          "systemMessage": "You are a community manager. Analyze yesterday's chat logs and generate a friendly, concise daily digest post using the provided format. Focus on key discussions and shared insights. \n\nCRITICAL CONSTRAINTS:\n- Do NOT include, mention, or reference any topics related to religion, ethnicity, or tribal groups (SARA) in the summary under any circumstances. Keep the focus entirely professional, lighthearted, and community-centric.\n- Output the final response EXCLUSIVELY using Telegram-compatible HTML tags instead of Markdown (use <b> for bold, <i> for italics, etc.).\n- Do not use asterisks (*) or markdown formatting anywhere in the output. For English terms, loanwords, or technical terms, you MUST wrap them inside <i>italic HTML tags</i> instead of asterisks.\n- Keep the entire summary strict, concise, and under 4,000 characters so it fits comfortably within Telegram's message limits.\n- Use emojis when needed.\n- Do not mention about new member introductions\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        -2224,
+        -960
+      ],
+      "id": "3d17b9a1-b918-4a2c-bafd-25be4cd4d600",
+      "name": "Create Daily Recap",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "8hvw9GQPPFc4G9HD",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-3.1-flash-lite",
+          "mode": "list",
+          "cachedResultName": "models/gemini-3.1-flash-lite"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Analyze last week's chat logs and generate a friendly, concise weekly digest post using format below. \n\nLast Week Chat logs:\n{{ $json.messages }}\n\nStructure the response exactly using this clean format:\n\n🚀 <b>WEEKLY RECAP</b> 🚀\n<i>Insight penting dari member selama seminggu terakhir!</i>\n\n🔥 <b>HOT TOPICS & PROJECTS</b> 🔥\n• <b>[Nama Project/Platform 1]:</b> [Rangkuman 1 kalimat tentang update, rate, atau kendala]\n• <b>[Nama Project/Platform 2]:</b> [Rangkuman 1 kalimat tentang update, rate, atau kendala]\n• <b>[Nama Project/Platform 3]:</b> [Rangkuman 1 kalimat tentang update, rate, atau kendala]\n• <b>[Nama Project/Platform 4]:</b> [Rangkuman 1 kalimat tentang update, rate, atau kendala]\n• <b>[Nama Project/Platform 5]:</b> [Rangkuman 1 kalimat tentang update, rate, atau kendala]\n\n💡 <b>SHARED INSIGHTS & TIPS</b> 💡\n• <b>[Topik Tips 1]:</b> [Tips singkat dari diskusi grup, 1 kalimat]\n• <b>[Topik Tips 2]:</b> [Tips singkat dari diskusi grup, 1 kalimat]\n• <b>[Topik Tips 3]:</b> [Tips singkat dari diskusi grup, 1 kalimat]\n• <b>[Topik Tips 4]:</b> [Tips singkat dari diskusi grup, 1 kalimat]\n• <b>[Topik Tips 5]:</b> [Tips singkat dari diskusi grup, 1 kalimat]\n\n💰 <b>FINANCIAL</b> 💰\n• [Rangkuman singkat jika ada bahasan gajian, rate, withdraw, PayPal, atau kurs bank, maks 1 kalimat]\n• [Rangkuman singkat jika ada bahasan gajian, rate, withdraw, PayPal, atau kurs bank, maks 1 kalimat]\n• [Rangkuman singkat jika ada bahasan gajian, rate, withdraw, PayPal, atau kurs bank, maks 1 kalimat]\n\n💬 <b>Top Active Channels</b>\n1. {{ $json.top_threads[0].thread_name }} ({{ $json.top_threads[0].message_count }} msg)\n2. {{ $json.top_threads[1].thread_name }} ({{ $json.top_threads[1].message_count }} msg)\n3. {{ $json.top_threads[2].thread_name }} ({{ $json.top_threads[2].message_count }} msg)\n4. {{ $json.top_threads[3].thread_name }} ({{ $json.top_threads[3].message_count }} msg)\n5. {{ $json.top_threads[4].thread_name }} ({{ $json.top_threads[4].message_count }} msg)\n\n🏆 <b>Top Active Members</b>\n1. {{ $json.top_members[0].first_name }} ({{ $json.top_members[0].message_count }} msg)\n2. {{ $json.top_members[1].first_name }} ({{ $json.top_members[1].message_count }} msg)\n3. {{ $json.top_members[2].first_name }} ({{ $json.top_members[2].message_count }} msg)\n4. {{ $json.top_members[3].first_name }} ({{ $json.top_members[3].message_count }} msg)\n5. {{ $json.top_members[4].first_name }} ({{ $json.top_members[4].message_count }} msg)\n\n👤<b>Total Active Members:</b> {{ $json.active_members }} members\n\n\"<i>[an inspiring, uplifting, and motivational quote that encourages the community members in their daily endeavors and hustle, 1 sentence]</i>\"\n"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {
+          "systemMessage": "You are a community manager. Analyze yesterday's chat logs and generate a friendly, concise daily digest post using the provided format. Focus on key discussions and shared insights. \n\nCRITICAL CONSTRAINTS:\n- Do NOT include, mention, or reference any topics related to religion, ethnicity, or tribal groups (SARA) in the summary under any circumstances. Keep the focus entirely professional, lighthearted, and community-centric.\n- Output the final response EXCLUSIVELY using Telegram-compatible HTML tags instead of Markdown (use <b> for bold, <i> for italics, etc.).\n- Do not use asterisks (*) or markdown formatting anywhere in the output. For English terms, loanwords, or technical terms, you MUST wrap them inside <i>italic HTML tags</i> instead of asterisks.\n- Keep the entire summary strict, concise, and under 4,000 characters so it fits comfortably within Telegram's message limits.\n- Use emojis when needed.\n- Do not mention about new member introductions\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        -2224,
+        -720
+      ],
+      "id": "e2b82483-955b-4839-aa0a-2efd2234879f",
+      "name": "Create Weekly Recap",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "8hvw9GQPPFc4G9HD",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "YOUR_GROUP_CHAT_ID",
+        "text": "={{ $json.content.parts[0].text }}",
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "HTML",
+          "message_thread_id": "DAILY_WEEKLY_RECAP_THREAD_ID"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -1872,
+        -960
+      ],
+      "id": "d194454a-8695-42de-91c4-f43f23cfe907",
+      "name": "Send Daily Recap",
+      "webhookId": "f557b179-639b-42a4-aca9-3d47b72b0c2f",
+      "credentials": {
+        "telegramApi": {
+          "id": "Gzt8GYCdmJAP19cR",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "YOUR_GROUP_CHAT_ID",
+        "text": "={{ $json.content.parts[0].text }}",
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "HTML",
+          "message_thread_id": "DAILY_WEEKLY_RECAP_THREAD_ID"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -1872,
+        -720
+      ],
+      "id": "813b62a5-0a4a-45ed-a7bb-7d46906af6bc",
+      "name": "Send Weekly Recap",
+      "webhookId": "f557b179-639b-42a4-aca9-3d47b72b0c2f",
+      "credentials": {
+        "telegramApi": {
+          "id": "Gzt8GYCdmJAP19cR",
+          "name": "Telegram account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Weekly Schedule": {
+      "main": [
+        [
+          {
+            "node": "Get Weekly Recap",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Daily Schedule": {
+      "main": [
+        [
+          {
+            "node": "Get Daily Recap",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Daily Recap": {
+      "main": [
+        [
+          {
+            "node": "Send Daily Recap",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Weekly Recap": {
+      "main": [
+        [
+          {
+            "node": "Send Weekly Recap",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Daily Recap": {
+      "main": [
+        [
+          {
+            "node": "Create Daily Recap",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Weekly Recap": {
+      "main": [
+        [
+          {
+            "node": "Create Weekly Recap",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false,
+    "timeSavedMode": "fixed",
+    "timezone": "Asia/Jakarta",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "nodeGroups": [],
+  "tags": []
+}

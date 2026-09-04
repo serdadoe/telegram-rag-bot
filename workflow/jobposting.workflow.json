@@ -1,0 +1,660 @@
+{
+  "name": "Telegram RAG Bot — Job Posting Detection",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "channel_post",
+          "edited_channel_post",
+          "message",
+          "callback_query"
+        ],
+        "additionalFields": {
+          "download": false
+        }
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -3248,
+        112
+      ],
+      "id": "a872622d-4901-4c2e-b7f2-996f8af28ac5",
+      "name": "Telegram Trigger",
+      "webhookId": "c61b2952-cdbf-4dfe-bf77-0b478732a6f1",
+      "credentials": {
+        "telegramApi": {
+          "id": "Gzt8GYCdmJAP19cR",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.message.chat.id }}",
+                    "rightValue": "YOUR_GROUP_CHAT_ID",
+                    "operator": {
+                      "type": "number",
+                      "operation": "equals"
+                    },
+                    "id": "4fb4c061-cb59-4bbc-af29-0ae39233ce68"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "TRUE"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        -3056,
+        112
+      ],
+      "id": "51d40a7f-54a8-4a9a-acba-5b76422dceec",
+      "name": "Group?"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $('Telegram Trigger').item.json.message.sticker }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "object",
+                      "operation": "notExists",
+                      "singleValue": true
+                    },
+                    "id": "74cb42f0-31d8-4ca8-bce1-b92bf0730b74"
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        -2816,
+        112
+      ],
+      "id": "0fa7862e-cd4e-4b20-aae7-614b8ccc05e7",
+      "name": "Exclude Sticker"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.message.entities[0].type }}",
+                    "rightValue": "bot_command",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "97d0047c-b148-40b0-a80f-fd6aad0d81fb"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "command"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "c8fb7ba1-d311-43da-8b81-86f203f91712",
+                    "leftValue": "={{ $json.message.entities[0].type }}",
+                    "rightValue": "url",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "url"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "592fbe05-daee-4bb4-ac04-b03dca030705",
+                    "leftValue": "={{ $json.message.caption_entities[0].type }}",
+                    "rightValue": "url",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "url2"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "db70061a-2e2e-47ba-b025-3571beb922ed",
+                    "leftValue": "={{ $json.message.entities[0].type }}",
+                    "rightValue": "bot_command",
+                    "operator": {
+                      "type": "string",
+                      "operation": "notEquals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "not_command"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        -1904,
+        16
+      ],
+      "id": "8e033a18-36d7-4be6-a7e2-11bf6e2935b8",
+      "name": "Check Intities"
+    },
+    {
+      "parameters": {
+        "jsCode": "for (const item of $input.all()) {\n  const msg = item.json.message || {};\n  const text = msg.text || '';\n  const urlEntity = (msg.entities || []).find(e => e.type === 'url');\n\n  const link = urlEntity\n    ? text.substring(urlEntity.offset, urlEntity.offset + urlEntity.length)\n    : (text.match(/https?:\\/\\/\\S+/)?.[0] ?? null);\n\n  item.json.link = link;\n  item.json.linkClean = link\n    ? link.replace(/^https?:\\/\\//i, '').replace(/^www\\./i, '')\n    : null;\n}\n\nreturn $input.all();"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1344,
+        -304
+      ],
+      "id": "b64d6aaf-0096-4537-940b-7998410118d4",
+      "name": "Extract Link"
+    },
+    {
+      "parameters": {
+        "url": "=https://r.jina.ai/{{ $json.linkClean }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -1104,
+        -304
+      ],
+      "id": "ed810db7-aec1-4750-82e7-1e79068b25a2",
+      "name": "Get Link Info"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Analyze the following Telegram message and link context to extract job posting details.\n\n---\nMessage / Web Context:\n{{ $json.data }}\n",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are an AI assistant designed to analyze incoming messages or web content and determine if they describe a job opening/hiring post.\n\nYour task:\n1. Determine if the text represents a legitimate job opening, freelance gig, or hiring request.\n2. If it IS a job opening, extract the relevant fields and set \"is_job_opening\" to true.\n3. If it IS NOT a job opening (e.g., spam, general chat, someone seeking a job, promotional material), set \"is_job_opening\" to false and use empty strings for the detail fields."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -880,
+        -304
+      ],
+      "id": "2ae5e092-dd66-4d97-8db0-35d8a3a3d3e0",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3.1-flash-lite",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        -880,
+        -112
+      ],
+      "id": "83620eed-e5ee-419a-afd8-6766ff73d754",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "8hvw9GQPPFc4G9HD",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"is_job_opening\": {\n      \"type\": \"boolean\",\n      \"description\": \"True if this post is a job opening or hiring call, false otherwise\"\n    },\n    \"Role\": {\n      \"type\": \"string\",\n      \"description\": \"Job title or role name. Use an empty string if no role is provided.\"\n    },\n    \"Platform\": {\n      \"type\": \"string\",\n      \"description\": \"Name of the platform or company mentioned (e.g., Mercor, Turing, Upwork, LinkedIn, direct Telegram hire), with no spaces. Use an empty string if none is provided.\"\n    },\n    \"Link\": {\n      \"type\": \"string\",\n      \"description\": \"Extracted URL/link included in the post. Use an empty string if no link is provided.\"\n    },\n    \"Rate\": {\n      \"type\": \"string\",\n      \"description\": \"Salary, rate, or compensation details. Use an 'not specified' if none is provided.\"\n    },\n    \"Job_Description\": {\n      \"type\": \"string\",\n      \"description\": \"Focus strictly on day-to-day responsibilities and tasks. If specific daily tasks aren't provided, summarize what the hiring platform or company does instead. Use an empty string if not applicable.\"\n    },\n    \"Posted_By_First_Name\": {\n      \"type\": \"string\",\n      \"description\": \"First name of the sender. Use an empty string if unknown.\"\n    }\n  },\n  \"required\": [\n    \"is_job_opening\",\n    \"Role\",\n    \"Platform\",\n    \"Link\",\n    \"Rate\",\n    \"Job_Description\",\n    \"Posted_By_First_Name\"\n  ]\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        -704,
+        -112
+      ],
+      "id": "18ae9c40-6f52-47db-b655-87613cab1e90",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.output.is_job_opening }}",
+                    "rightValue": "true",
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "true",
+                      "singleValue": true
+                    },
+                    "id": "3ae794c3-9e13-461e-8ab3-f141476ecb64"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "true"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        -528,
+        -304
+      ],
+      "id": "07a32156-e992-418d-a44d-1a2f6539a9dd",
+      "name": "Job Opening Only"
+    },
+    {
+      "parameters": {
+        "jsCode": "const trigger = $('Telegram Trigger').item.json.message;\nconst output = $json.output;\n\nconst role = output.Role || 'Unknown role';\nconst platform = output.Platform || '';\nconst link = output.Link || '';\nconst rate = output.Rate || 'not specified';\nconst description = output.Job_Description || '';\nconst firstName = trigger.from.first_name || output.Posted_By_First_Name || '';\nconst originalPost = `https://t.me/c/YOUR_GROUP_ID/${trigger.message_thread_id ?? 1}/${trigger.message_id}`;\n\nconst pageContent = `Job opening — Role: ${role}${platform ? ' | Platform: ' + platform : ''} | Rate: ${rate}\\n${description}${link ? '\\nLink: ' + link : ''}\\nPosted by: ${firstName}`;\n\nreturn {\n  json: {\n    pageContent,\n    metadata: {\n      source: 'job_posting',\n      chat_id: trigger.chat.id,\n      message_id: trigger.message_id,\n      thread_id: trigger.message_thread_id ?? null,\n      sender: firstName,\n      role,\n      platform,\n      rate,\n      link,\n      original_post: originalPost,\n      timestamp: new Date(trigger.date * 1000).toISOString()\n    }\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -320,
+        -304
+      ],
+      "id": "514099fa-37b3-4de9-babe-bcb6c2167d5b",
+      "name": "Job Opening Record"
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.embeddingsGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -160,
+        -128
+      ],
+      "id": "07f703ff-9a67-4102-86b6-c6d87182aeea",
+      "name": "Embeddings (Payout)1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "8hvw9GQPPFc4G9HD",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonMode": "expressionData",
+        "jsonData": "={{ $json.pageContent }}",
+        "options": {
+          "metadata": {
+            "metadataValues": [
+              {
+                "name": "sender_name",
+                "value": "={{ $('Telegram Trigger').item.json.message.from.first_name }}"
+              },
+              {
+                "name": "username",
+                "value": "={{ $('Telegram Trigger').item.json.message.from.username || '' }}"
+              },
+              {
+                "name": "=chat_id",
+                "value": "={{ $('Telegram Trigger').item.json.message.chat.id }}"
+              },
+              {
+                "name": "message_id",
+                "value": "={{ $('Telegram Trigger').item.json.message.message_id }}"
+              },
+              {
+                "name": "thread_id",
+                "value": "={{ $('Telegram Trigger').item.json.message.message_thread_id || '' }}"
+              },
+              {
+                "name": "created_at_gmt7",
+                "value": "={{ DateTime.fromSeconds($('Telegram Trigger').item.json.message.date).setZone('Asia/Jakarta').toFormat('yyyy-MM-dd HH:mm:ss') }}"
+              },
+              {
+                "name": "reply_to_message_id",
+                "value": "={{ $('Telegram Trigger').item.json.message.reply_to_message.message_id }}"
+              },
+              {
+                "name": "source",
+                "value": "={{ $json.metadata.source }}"
+              },
+              {
+                "name": "user_id",
+                "value": "={{ $('Telegram Trigger').item.json.message.from.id }}"
+              }
+            ]
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1.1,
+      "position": [
+        -16,
+        -128
+      ],
+      "id": "350bedf2-9191-4104-862e-4e76e979078b",
+      "name": "Data Loader4"
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "tableName": "telegram_knowledge",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.1,
+      "position": [
+        -144,
+        -304
+      ],
+      "id": "a372131e-711e-433f-9b70-d0527b960d64",
+      "name": "Insert Job Opening",
+      "credentials": {
+        "supabaseApi": {
+          "id": "QYdAmDIZcGklngZ1",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "=🔎✨ <b>NEW JOB OPENING</b> ✨🔎\n\n👤 Role: <b>{{ $('Job Opening Only').item.json.output.Role }}</b>\n🏢 Platform: {{ $('Job Opening Only').item.json.output.Platform }}\n🔗 Link: {{ $('Job Opening Only').item.json.output.Link }}\n💰 Rate: <b>{{ $('Job Opening Only').item.json.output.Rate }}</b>\n\n📝 Description: <i>{{ $('Job Opening Only').item.json.output.Job_Description }}</i>\n\n----------\n📩 Posted By: <b><a href=\"tg://user?id={{ $('Telegram Trigger').item.json.message.from.id }}\">@{{ $('Telegram Trigger').item.json.message.from.first_name }}</a></b>\n📌 Original Post: <a href=\"https://t.me/c/YOUR_GROUP_ID/{{ $('Telegram Trigger').item.json.message.message_thread_id ?? 1 }}/{{ $('Telegram Trigger').item.json.message.message_id }}\">here</a>\n\n#jobposting #lowongan #{{ $('Job Opening Only').item.json.output.Platform }}",
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "HTML",
+          "message_thread_id": "=JOB_OPENING_THREAD_ID"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        208,
+        -304
+      ],
+      "id": "ad4b9d1e-f495-4195-b11f-248ab34b898b",
+      "name": "Send Job Posting",
+      "webhookId": "1e356b33-6ea4-436d-8597-eac7282aea45",
+      "credentials": {
+        "telegramApi": {
+          "id": "Gzt8GYCdmJAP19cR",
+          "name": "Telegram account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Group?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Link": {
+      "main": [
+        [
+          {
+            "node": "Get Link Info",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Link Info": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Job Opening Only",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Job Opening Only": {
+      "main": [
+        [
+          {
+            "node": "Job Opening Record",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Intities": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Extract Link",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Extract Link",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Group?": {
+      "main": [
+        [
+          {
+            "node": "Exclude Sticker",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Exclude Sticker": {
+      "main": [
+        [
+          {
+            "node": "Check Intities",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Job Opening Record": {
+      "main": [
+        [
+          {
+            "node": "Insert Job Opening",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings (Payout)1": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Insert Job Opening",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Data Loader4": {
+      "ai_document": [
+        [
+          {
+            "node": "Insert Job Opening",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert Job Opening": {
+      "main": [
+        [
+          {
+            "node": "Send Job Posting",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false,
+    "timeSavedMode": "fixed",
+    "timezone": "Asia/Jakarta",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "nodeGroups": [],
+  "tags": []
+}
