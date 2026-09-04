@@ -2335,7 +2335,7 @@
         "url": "=https://api.telegram.org/bot{{ $env.TELEGRAM_BOT_TOKEN }}/sendMessage",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({\n  chat_id: $('Build Challenge').item.json.chatId,\n  message_thread_id: 94354,\n  text: $('Build Challenge').item.json.promptText,\n  parse_mode: 'HTML',\n  reply_markup: $('Build Challenge').item.json.keyboard\n}) }}",
+        "jsonBody": "={{ JSON.stringify({\n  chat_id: $('Build Challenge').item.json.chatId,\n  message_thread_id: 'VERIFICATION_THREAD_ID',\n  text: $('Build Challenge').item.json.promptText,\n  parse_mode: 'HTML',\n  reply_markup: $('Build Challenge').item.json.keyboard\n}) }}",
         "options": {}
       },
       "id": "88fccad0-b7c2-439f-bbff-0bfbff68ea68",
