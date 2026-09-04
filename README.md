@@ -1,6 +1,6 @@
 # Telegram RAG Bot
 
-A Telegram group assistant built as an [n8n](https://n8n.io) workflow. It silently ingests everything shared in the group — text, images, PDFs, and office documents — into a vector-searchable knowledge base, then answers questions about it, summarizes recent chat, auto-detects job postings, and tracks payment/payout proof shared by members.
+A Telegram group assistant built as an [n8n](https://n8n.io) workflow. It silently ingests everything shared in the group — text, images, PDFs, and office documents — into a vector-searchable knowledge base, then answers questions about it, summarizes recent chat, auto-detects job postings, tracks payment/payout proof shared by members, and gates new joiners behind a captcha before they can post.
 
 No custom backend — the entire system is one n8n workflow, using Google Gemini for generation/embeddings and Postgres + pgvector for retrieval.
 
@@ -20,10 +20,12 @@ Fast-moving Telegram groups (freelance/job communities, in this case) bury usefu
 | `/payment_this_month` / `/payment_last_month` | Payment records for that period |
 | `/help` | Lists all commands |
 
-Plus two things that happen automatically, with no command needed:
+Plus things that happen automatically, with no command needed:
 
 - **Job posting detection** — any link shared in the group is fetched and read (via [r.jina.ai](https://r.jina.ai)), classified by Gemini as a job/gig posting or not, and — if it is — reposted as a formatted alert with role, platform, rate, and description extracted.
 - **Payment tracking** — screenshots of payout/payment proof are classified by Gemini vision (verified / pending / invoice / not-a-payment, rejecting social-media reposts and product ads that just *look* like payment screenshots), pass through an inline-button verification step, and get logged for the `/payment_*` commands.
+- **New member captcha** — when someone joins, the bot immediately mutes them (`restrictChatMember`) and posts a "tap the right number" challenge (4 buttons, one correct answer) with a 5-minute deadline and 3 attempts. Answer correctly in time and they're unmuted and greeted with a welcome message (group rules + topic directory); answer wrong three times, let the clock run out, or tap someone *else's* challenge and it's rejected. Failure — wrong 3 times or timeout — gets them auto-kicked (a short timed ban, so they can rejoin and try again later). A once-a-minute schedule trigger sweeps for expired, unanswered challenges.
+- **Daily / weekly digest** — scheduled Gemini-generated recaps of the group's most active topics and members, posted automatically.
 
 Every message, image, and document is also embedded and stored in the background regardless of command, which is what makes `/ask` possible.
 
@@ -32,11 +34,15 @@ Every message, image, and document is also embedded and stored in the background
 ```mermaid
 flowchart TD
     TG[Telegram group] -->|message / photo / document / callback| Trigger[Telegram Trigger]
+    TG -->|new member joins| NewMember[New member event]
+
     Trigger --> Filter[Filter: this group only, no stickers]
     Filter --> Route{Message type}
 
     Route -->|plain text| Embed1[Embed text]
-    Route -->|photo| Vision1[Gemini vision: describe image]
+    Route -->|photo| PayCheck{Gemini vision:\nis this a payment screenshot?}
+    PayCheck -->|no| Vision1[Gemini vision: describe image]
+    PayCheck -->|yes, paid/pending/invoice| Verify[Build payout record]
     Route -->|document| DocType{PDF or office file?}
     DocType -->|PDF| Vision2[Gemini: extract text]
     DocType -->|docx / xlsx / csv| Convert[Convert to JSON]
@@ -45,13 +51,12 @@ flowchart TD
     Vision1 --> Embed1
     Embed1 --> DB[(Postgres + pgvector\ntelegram_knowledge)]
 
+    Verify --> DB
+    Verify --> PayAlert[Post payout alert]
+
     Route -->|shared link| Reader[r.jina.ai: fetch readable content]
     Reader --> JobCheck[Gemini: is this a job posting?]
     JobCheck -->|yes| JobAlert[Post formatted job alert]
-
-    Route -->|payment screenshot| PayVision[Gemini vision: classify payment proof]
-    PayVision --> Verify[Inline-button verification]
-    Verify --> Embed1
 
     Route -->|bot command| Cmd{Command router}
     Cmd -->|/ask| Retrieve[Hybrid search: vector + keyword\n+ reply-thread traversal]
@@ -69,6 +74,19 @@ flowchart TD
     PayQuery --> Reply1
 
     Cmd -->|/help| Reply1
+
+    NewMember --> Mute[Mute member + send number challenge]
+    Mute --> Pending[(pending_verifications)]
+    TG -->|button tap| Callback[Verification callback]
+    Callback --> CheckAnswer{Correct, and\nwithin 5 min / 3 tries?}
+    Pending -->|expiry sweep, every minute| Kick
+    CheckAnswer -->|yes| Unmute[Unmute + send welcome]
+    CheckAnswer -->|no, wrong 3x or timeout| Kick[Kick member\nshort timed ban]
+    CheckAnswer -->|wrong, tries remain| NewChallenge[New number challenge]
+    NewChallenge --> Pending
+
+    Sched[Daily / weekly schedule] --> Digest[Query + summarize top topics & members]
+    Digest --> DigestPost[Post recap]
 ```
 
 ### How retrieval works
@@ -81,6 +99,19 @@ flowchart TD
 4. Walks the reply-chain graph (a recursive CTE over `reply_to_message_id`) up to 10 levels in both directions from every top result, so a terse reply pulls in the question it was answering and vice versa
 5. Feeds the assembled context + source links to Gemini to generate a direct answer, with an "AI-generated answers may be inaccurate" disclaimer appended
 
+## Feature workflows (standalone files)
+
+The full bot is one n8n workflow ([`workflow/telegram-rag-bot.workflow.json`](workflow/telegram-rag-bot.workflow.json)), but each feature area is also exported on its own below — useful for studying or reusing just one piece without wading through all 129 nodes. These are **reference extracts**: shared nodes (`Telegram Trigger`, `Group?`, `Command Router`, etc.) are duplicated into whichever files need them for context, each file is set to inactive, and none of them are meant to be imported *and activated* side by side in the same n8n instance as the full workflow — they'd register duplicate triggers. Import the full workflow to actually run the bot; import one of these to read or repurpose a single feature.
+
+| File | Covers |
+|---|---|
+| [`workflow/chat-logging.workflow.json`](workflow/chat-logging.workflow.json) | Ingesting text, images, and documents (PDF/docx/xlsx/csv) into the knowledge base |
+| [`workflow/commands.workflow.json`](workflow/commands.workflow.json) | `/help`, `/latest`, `/recent`, `/last100`, `/last200`, `/ask` |
+| [`workflow/payout-tracking.workflow.json`](workflow/payout-tracking.workflow.json) | Payment/payout screenshot classification + the `/payment_*` commands |
+| [`workflow/job-posting.workflow.json`](workflow/job-posting.workflow.json) | Link → readable content → job-posting classification → alert |
+| [`workflow/member-captcha.workflow.json`](workflow/member-captcha.workflow.json) | New-member mute, number challenge, verification, and the timeout/ban sweep |
+| [`workflow/daily-weekly-digest.workflow.json`](workflow/daily-weekly-digest.workflow.json) | Scheduled daily/weekly recap generation and posting |
+
 ## Tech stack
 
 - **[n8n](https://n8n.io)** — workflow orchestration (the entire bot is one workflow, no custom server)
@@ -92,7 +123,7 @@ flowchart TD
 
 ## Database setup
 
-The knowledge store is plain **Postgres with the `pgvector` extension** — any host that offers that works (a managed Postgres provider, self-hosted, etc.). No vendor-specific features are used.
+The knowledge store is plain **Postgres with the `pgvector` extension** — any host that offers that works (a managed Postgres provider, self-hosted, etc.). No vendor-specific SQL is used, though the n8n node type for the insert nodes (`vectorStoreSupabase`) does identify which managed Postgres provider this deployment happens to run on — n8n ships one LangChain vector-store node per provider, and it still just talks plain Postgres/pgvector underneath, so it's interchangeable with any other pgvector host.
 
 ```sql
 -- 1. Enable the vector extension
@@ -164,6 +195,22 @@ $$;
 
 The `/ask` keyword search (see [How retrieval works](#how-retrieval-works)) queries `content_tsv` directly with `to_tsquery('simple', ...)`; the reply-thread traversal walks `message_id` / `reply_to_message_id` / `chat_id` on the same table via a recursive CTE — no separate tables needed.
 
+The captcha flow (see [Feature workflows](#feature-workflows-standalone-files)) needs one more table, reconstructed here from the queries the workflow runs against it:
+
+```sql
+CREATE TABLE pending_verifications (
+  chat_id       BIGINT NOT NULL,
+  user_id       BIGINT NOT NULL,
+  message_id    BIGINT NOT NULL,   -- the challenge message, so it can be edited/deleted later
+  correct_index BIGINT NOT NULL,   -- which of the 4 buttons is correct, re-rolled on each wrong attempt
+  attempts      INT NOT NULL DEFAULT 0,
+  deadline      TIMESTAMPTZ NOT NULL,
+  PRIMARY KEY (chat_id, user_id)
+);
+```
+
+A once-a-minute schedule trigger selects rows where `deadline < now()` and bans/cleans them up — nothing else times it out.
+
 ## Setup
 
 1. Install the community node **[@mazix/n8n-nodes-converter-documents](https://www.npmjs.com/package/@mazix/n8n-nodes-converter-documents)** in your n8n instance (Settings → Community Nodes) — it's what converts non-PDF office documents (docx/xlsx/csv) to text before embedding. Required before importing, or the "Convert File to JSON" node will fail to load.
@@ -174,8 +221,9 @@ The `/ask` keyword search (see [How retrieval works](#how-retrieval-works)) quer
    - The environment variable `GEMINI_API_KEY` on your n8n instance (used by the raw HTTP "Embed Question" node — set this before running, since the exported workflow references `{{ $env.GEMINI_API_KEY }}`).
 5. Also set `TELEGRAM_BOT_TOKEN` as an environment variable on your n8n instance (used the same way by the callback-answer HTTP nodes).
 6. Set up the database as described in [Database setup](#database-setup) above, and add the connection as a Postgres credential in n8n.
-7. The group chat ID, and every thread/topic ID (job postings, payout alerts, daily/weekly recap, and the per-topic channel list in the welcome message), are replaced in the export with placeholder text like `YOUR_GROUP_CHAT_ID` and `JOB_OPENING_THREAD_ID` — find and replace these with your own group's real IDs before activating.
-8. Activate the workflow.
+7. The group chat ID, and every thread/topic ID (job postings, payout alerts, daily/weekly recap, the verification-challenge topic, and the per-topic channel list in the welcome message), are replaced in the export with placeholder text like `YOUR_GROUP_CHAT_ID` and `JOB_OPENING_THREAD_ID` — find and replace these with your own group's real IDs before activating.
+8. Make the bot an **admin** in your group with the "Ban users" and "Restrict members" permissions — the captcha flow calls `restrictChatMember`/`banChatMember` directly, which fail silently (or error) for a non-admin bot.
+9. Activate the workflow.
 
 > **Note:** The published workflow JSON has all credentials redacted/removed — n8n stores those separately and encrypted. You'll reconnect each credential (Telegram, Gemini, Postgres) after importing.
 
