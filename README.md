@@ -1,4 +1,5 @@
 # Telegram RAG Bot
+![Profile views](https://komarev.com/ghpvc/?username=serdadoe-telegram-rag-bot&color=blueviolet&style=flat&label=Repo+Views)
 
 A Telegram group assistant built as an [n8n](https://n8n.io) workflow. It silently ingests everything shared in the group — text, images, PDFs, and office documents — into a vector-searchable knowledge base, then answers questions about it, summarizes recent chat, auto-detects job postings, tracks payment/payout proof shared by members, and gates new joiners behind a captcha before they can post.
 
